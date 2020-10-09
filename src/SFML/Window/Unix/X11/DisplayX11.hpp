@@ -22,43 +22,53 @@
 //
 ////////////////////////////////////////////////////////////
 
-#ifndef SFML_SHAREDDISPLAY_HPP
-#define SFML_SHAREDDISPLAY_HPP
+#ifndef SFML_DISPLAY_X11_HPP
+#define SFML_DISPLAY_X11_HPP
 
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
+#include <X11/Xlib.h>
 #include <string>
+
 
 namespace sf
 {
 namespace priv
 {
-enum DisplayType {
-    Wayland,
-    X11
-};
 ////////////////////////////////////////////////////////////
-/// \brief Try to connect to a Wayland/X11 display, and report which works
+/// \brief Get the shared Display
 ///
-/// This never returns Unknown.
+/// This function increments the reference count of the display,
+/// it must be matched with a call to CloseDisplay.
+///
+/// \return Pointer to the shared display
+///
 ////////////////////////////////////////////////////////////
-enum DisplayType getDisplayType();
+Display* OpenX11Display();
 
 ////////////////////////////////////////////////////////////
-/// \brief Close the connection made by getDisplayType
+/// \brief Release a reference to the shared display
 ///
-/// Call after getDisplayType has been used to pick a display, and after
-/// whatever class based on the display type has been initialized. (This
-/// ensures we don't "double-connnect".)
+/// \param display Display to release
+///
 ////////////////////////////////////////////////////////////
-void unrefDisplay();
+void CloseX11Display(Display* display);
+
+////////////////////////////////////////////////////////////
+/// \brief Get the atom with the specified name
+///
+/// \param name         Name of the atom
+/// \param onlyIfExists Don't try to create the atom if it doesn't already exist
+///
+/// \return Atom if it exists or None (0) if it doesn't
+///
+////////////////////////////////////////////////////////////
+Atom getAtom(const std::string& name, bool onlyIfExists = false);
 
 } // namespace priv
 
 } // namespace sf
 
 
-#endif // SFML_SHAREDDISPLAY_HPP
-
-
+#endif // SFML_DISPLAY_X11_HPP

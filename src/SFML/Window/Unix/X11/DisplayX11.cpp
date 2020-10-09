@@ -25,54 +25,84 @@
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <SFML/Window/VideoModeImpl.hpp>
-#include <SFML/Window/Unix/X11/VideoModeImplX11.hpp>
-#include <SFML/Window/Unix/Wayland/VideoModeImplWayland.hpp>
-#include <SFML/Window/Unix/Display.hpp>
 #include <SFML/System/Err.hpp>
-//#include <X11/Xlib.h>
-//#include <X11/extensions/Xrandr.h>
-#include <algorithm>
+#include <SFML/System/Mutex.hpp>
+#include <SFML/System/Lock.hpp>
+#include <SFML/Window/Unix/X11/DisplayX11.hpp>
+#include <X11/keysym.h>
+#include <cassert>
+#include <cstdlib>
+#include <map>
 
+
+namespace
+{
+    // The shared display and its reference counter
+    Display* sharedDisplay = NULL;
+    unsigned int referenceCount = 0;
+    sf::Mutex mutex;
+
+    typedef std::map<std::string, Atom> AtomMap;
+    AtomMap atoms;
+}
 
 namespace sf
 {
 namespace priv
 {
 ////////////////////////////////////////////////////////////
-/// \brief Get the list of all the supported fullscreen video modes
-///
-/// \return Array filled with the fullscreen video modes
-///
-////////////////////////////////////////////////////////////
-std::vector<VideoMode> VideoModeImpl::getFullscreenModes() {
-    std::vector<VideoMode> r;
-    DisplayType displayType = getDisplayType();
-    if (displayType == Wayland) {
-        r = VideoModeImplWayland::getFullscreenModes();
-    } else {
-        r = VideoModeImplX11::getFullscreenModes();
+Display* OpenX11Display()
+{
+    Lock lock(mutex);
+
+    if (referenceCount == 0)
+    {
+        sharedDisplay = XOpenDisplay(NULL);
+
+        // Opening display failed: The best we can do at the moment is to output a meaningful error message
+        // and cause an abnormal program termination
+        if (!sharedDisplay)
+        {
+            err() << "Failed to open X11 display; make sure the DISPLAY environment variable is set correctly" << std::endl;
+            std::abort();
+        }
     }
-    unrefDisplay();
-    return r;
+
+    referenceCount++;
+    return sharedDisplay;
 }
 
+
 ////////////////////////////////////////////////////////////
-/// \brief Get the current desktop video mode
-///
-/// \return Current desktop video mode
-///
+void CloseX11Display(Display* display)
+{
+    Lock lock(mutex);
+
+    assert(display == sharedDisplay);
+
+    referenceCount--;
+    if (referenceCount == 0)
+        XCloseDisplay(display);
+}
+
+
 ////////////////////////////////////////////////////////////
-VideoMode VideoModeImpl::getDesktopMode() {
-    VideoMode r;
-    DisplayType displayType = getDisplayType();
-    if (displayType == Wayland) {
-        r = VideoModeImplWayland::getDesktopMode();
-    } else {
-        r = VideoModeImplX11::getDesktopMode();
-    }
-    unrefDisplay();
-    return r;
+Atom getAtom(const std::string& name, bool onlyIfExists)
+{
+    AtomMap::const_iterator iter = atoms.find(name);
+
+    if (iter != atoms.end())
+        return iter->second;
+
+    Display* display = OpenX11Display();
+
+    Atom atom = XInternAtom(display, name.c_str(), onlyIfExists ? True : False);
+
+    CloseX11Display(display);
+
+    atoms[name] = atom;
+
+    return atom;
 }
 
 } // namespace priv

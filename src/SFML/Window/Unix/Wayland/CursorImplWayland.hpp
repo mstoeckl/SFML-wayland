@@ -22,29 +22,29 @@
 //
 ////////////////////////////////////////////////////////////
 
-#ifndef SFML_CURSORIMPLUNIX_HPP
-#define SFML_CURSORIMPLUNIX_HPP
+#ifndef SFML_CURSORIMPLWAYLAND_HPP
+#define SFML_CURSORIMPLWAYLAND_HPP
 
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/Window/Cursor.hpp>
 #include <SFML/System/NonCopyable.hpp>
-#include <SFML/Window/Unix/Display.hpp>
+#include <SFML/System/Vector2.hpp>
+#include <SFML/Window/WindowStyle.hpp> // Prevent conflict with macro None from Xlib
+
+#include <SFML/Window/Unix/Wayland/DisplayWayland.hpp>
 
 namespace sf
 {
 
 namespace priv
 {
-class CursorImplX11;
-class CursorImplWayland;
-
 ////////////////////////////////////////////////////////////
 /// \brief Unix implementation of Cursor
 ///
 ////////////////////////////////////////////////////////////
-class CursorImpl : NonCopyable
+class CursorImplWayland : NonCopyable
 {
 public:
 
@@ -54,7 +54,7 @@ public:
     /// Refer to sf::Cursor::Cursor().
     ///
     ////////////////////////////////////////////////////////////
-    CursorImpl();
+    CursorImplWayland();
 
     ////////////////////////////////////////////////////////////
     /// \brief Destructor
@@ -62,7 +62,7 @@ public:
     /// Refer to sf::Cursor::~Cursor().
     ///
     ////////////////////////////////////////////////////////////
-    ~CursorImpl();
+    ~CursorImplWayland();
 
     ////////////////////////////////////////////////////////////
     /// \brief Create a cursor with the provided image
@@ -81,16 +81,16 @@ public:
     bool loadFromSystem(Cursor::Type type);
 
 private:
-    friend class WindowImplX11;
     friend class WindowImplWayland;
-    union {
-        CursorImplX11 * m_x11;
-        CursorImplWayland * m_wayland;
-    };
+
+    ////////////////////////////////////////////////////////////
+    // Member data
+    ////////////////////////////////////////////////////////////
+    WaylandDisplay* m_display;
 };
 
 } // namespace priv
 
 } // namespace sf
 
-#endif // SFML_CUSROSIMPLUNIX_HPP
+#endif // SFML_CURSORIMPLWAYLAND_HPP

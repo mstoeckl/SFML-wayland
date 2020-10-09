@@ -22,43 +22,86 @@
 //
 ////////////////////////////////////////////////////////////
 
-#ifndef SFML_SHAREDDISPLAY_HPP
-#define SFML_SHAREDDISPLAY_HPP
-
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <string>
+#include <SFML/Window/Unix/Wayland/ClipboardImplWayland.hpp>
+#include <SFML/Window/Unix/Wayland/DisplayWayland.hpp>
+#include <SFML/System/Clock.hpp>
+#include <SFML/System/Err.hpp>
+#include <vector>
 
 namespace sf
 {
 namespace priv
 {
-enum DisplayType {
-    Wayland,
-    X11
-};
-////////////////////////////////////////////////////////////
-/// \brief Try to connect to a Wayland/X11 display, and report which works
-///
-/// This never returns Unknown.
-////////////////////////////////////////////////////////////
-enum DisplayType getDisplayType();
 
 ////////////////////////////////////////////////////////////
-/// \brief Close the connection made by getDisplayType
-///
-/// Call after getDisplayType has been used to pick a display, and after
-/// whatever class based on the display type has been initialized. (This
-/// ensures we don't "double-connnect".)
+String ClipboardImplWayland::getString()
+{
+    return getInstance().getStringImpl();
+}
+
+
 ////////////////////////////////////////////////////////////
-void unrefDisplay();
+void ClipboardImplWayland::setString(const String& text)
+{
+    getInstance().setStringImpl(text);
+}
+
+
+////////////////////////////////////////////////////////////
+void ClipboardImplWayland::processEvents()
+{
+    getInstance().processEventsImpl();
+}
+
+
+////////////////////////////////////////////////////////////
+ClipboardImplWayland::ClipboardImplWayland() :
+//m_window (0),
+m_requestResponded(false)
+{
+    // Open a connection with the X server
+    m_display = OpenWaylandDisplay();
+
+}
+
+
+////////////////////////////////////////////////////////////
+ClipboardImplWayland::~ClipboardImplWayland()
+{
+    CloseWaylandDisplay(m_display);
+}
+
+
+////////////////////////////////////////////////////////////
+ClipboardImplWayland& ClipboardImplWayland::getInstance()
+{
+    static ClipboardImplWayland instance;
+
+    return instance;
+}
+
+
+////////////////////////////////////////////////////////////
+String ClipboardImplWayland::getStringImpl()
+{
+    return String();
+}
+
+
+////////////////////////////////////////////////////////////
+void ClipboardImplWayland::setStringImpl(const String& text)
+{
+}
+
+
+////////////////////////////////////////////////////////////
+void ClipboardImplWayland::processEventsImpl()
+{
+}
 
 } // namespace priv
 
 } // namespace sf
-
-
-#endif // SFML_SHAREDDISPLAY_HPP
-
-

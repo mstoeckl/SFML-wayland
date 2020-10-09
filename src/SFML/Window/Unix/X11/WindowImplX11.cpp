@@ -25,10 +25,11 @@
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <SFML/Window/Unix/WindowImplX11.hpp>
-#include <SFML/Window/Unix/ClipboardImpl.hpp>
-#include <SFML/Window/Unix/Display.hpp>
-#include <SFML/Window/Unix/InputImpl.hpp>
+#include <SFML/Window/Unix/X11/WindowImplX11.hpp>
+#include <SFML/Window/Unix/X11/ClipboardImplX11.hpp>
+#include <SFML/Window/Unix/X11/CursorImplX11.hpp>
+#include <SFML/Window/Unix/X11/DisplayX11.hpp>
+#include <SFML/Window/Unix/X11/InputImplX11.hpp>
 #include <SFML/System/Utf.hpp>
 #include <SFML/System/Err.hpp>
 #include <SFML/System/Mutex.hpp>
@@ -53,7 +54,7 @@
     #include <SFML/Window/EglContext.hpp>
     typedef sf::priv::EglContext ContextType;
 #else
-    #include <SFML/Window/Unix/GlxContext.hpp>
+    #include <SFML/Window/Unix/X11/GlContextX11.hpp>
     typedef sf::priv::GlxContext ContextType;
 #endif
 
@@ -151,7 +152,7 @@ namespace
         if (!netSupportingWmCheck || !netSupported)
             return false;
 
-        ::Display* display = sf::priv::OpenDisplay();
+        ::Display* display = sf::priv::OpenX11Display();
 
         Atom actualType;
         int actualFormat;
@@ -177,7 +178,7 @@ namespace
             if (result == Success)
                 XFree(data);
 
-            sf::priv::CloseDisplay(display);
+            sf::priv::CloseX11Display(display);
             return false;
         }
 
@@ -187,7 +188,7 @@ namespace
 
         if (!rootWindow)
         {
-            sf::priv::CloseDisplay(display);
+            sf::priv::CloseX11Display(display);
             return false;
         }
 
@@ -209,7 +210,7 @@ namespace
             if (result == Success)
                 XFree(data);
 
-            sf::priv::CloseDisplay(display);
+            sf::priv::CloseX11Display(display);
             return false;
         }
 
@@ -219,14 +220,14 @@ namespace
 
         if (!childWindow)
         {
-            sf::priv::CloseDisplay(display);
+            sf::priv::CloseX11Display(display);
             return false;
         }
 
         // Conforming window managers should return the same window for both queries
         if (rootWindow != childWindow)
         {
-            sf::priv::CloseDisplay(display);
+            sf::priv::CloseX11Display(display);
             return false;
         }
 
@@ -238,7 +239,7 @@ namespace
 
         if (!netWmName)
         {
-            sf::priv::CloseDisplay(display);
+            sf::priv::CloseX11Display(display);
             return true;
         }
 
@@ -273,7 +274,7 @@ namespace
         if (result == Success)
             XFree(data);
 
-        sf::priv::CloseDisplay(display);
+        sf::priv::CloseX11Display(display);
 
         return true;
     }
@@ -501,7 +502,7 @@ m_iconMaskPixmap (0),
 m_lastInputTime  (0)
 {
     // Open a connection with the X server
-    m_display = OpenDisplay();
+    m_display = OpenX11Display();
 
     // Make sure to check for EWMH support before we do anything
     ewmhSupported();
@@ -550,7 +551,7 @@ m_iconMaskPixmap (0),
 m_lastInputTime  (0)
 {
     // Open a connection with the X server
-    m_display = OpenDisplay();
+    m_display = OpenX11Display();
 
     // Make sure to check for EWMH support before we do anything
     ewmhSupported();
@@ -786,7 +787,7 @@ WindowImplX11::~WindowImplX11()
         XCloseIM(m_inputMethod);
 
     // Close the connection with the X server
-    CloseDisplay(m_display);
+    CloseX11Display(m_display);
 
     // Remove this window from the global list of windows (required for focus request)
     Lock lock(allWindowsMutex);
@@ -819,7 +820,7 @@ void WindowImplX11::processEvents()
     }
 
     // Process clipboard window events
-    priv::ClipboardImpl::processEvents();
+    priv::ClipboardImplX11::processEvents();
 }
 
 
@@ -1110,7 +1111,7 @@ void WindowImplX11::setMouseCursorVisible(bool visible)
 ////////////////////////////////////////////////////////////
 void WindowImplX11::setMouseCursor(const CursorImpl& cursor)
 {
-    m_lastCursor = cursor.m_cursor;
+    m_lastCursor = cursor.m_x11->m_cursor;
     XDefineCursor(m_display, m_window, m_lastCursor);
     XFlush(m_display);
 }

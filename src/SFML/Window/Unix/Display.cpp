@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
 //
 // SFML - Simple and Fast Multimedia Library
 // Copyright (C) 2007-2020 Laurent Gomila (laurent@sfml-dev.org)
@@ -29,80 +29,77 @@
 #include <SFML/System/Mutex.hpp>
 #include <SFML/System/Lock.hpp>
 #include <SFML/Window/Unix/Display.hpp>
-#include <X11/keysym.h>
-#include <cassert>
-#include <cstdlib>
-#include <map>
+#include <SFML/Window/Unix/Wayland/DisplayWayland.hpp>
+#include <SFML/Window/Unix/X11/DisplayX11.hpp>
 
+#include <cstring>
 
 namespace
 {
     // The shared display and its reference counter
-    Display* sharedDisplay = NULL;
-    unsigned int referenceCount = 0;
-    sf::Mutex mutex;
-
-    typedef std::map<std::string, Atom> AtomMap;
-    AtomMap atoms;
+    sf::priv::WaylandDisplay* tmpWaylandDisplay = NULL;
+    ::Display* tmpX11Display = NULL;
+    bool found_display = false;
+    sf::priv::DisplayType type = sf::priv::DisplayType::X11;
 }
 
 namespace sf
 {
 namespace priv
 {
-////////////////////////////////////////////////////////////
-Display* OpenDisplay()
-{
-    Lock lock(mutex);
-
-    if (referenceCount == 0)
-    {
-        sharedDisplay = XOpenDisplay(NULL);
-
-        // Opening display failed: The best we can do at the moment is to output a meaningful error message
-        // and cause an abnormal program termination
-        if (!sharedDisplay)
-        {
-            err() << "Failed to open X11 display; make sure the DISPLAY environment variable is set correctly" << std::endl;
-            std::abort();
-        }
+enum DisplayType getDisplayType() {
+    if (found_display) {
+        return type;
     }
 
-    referenceCount++;
-    return sharedDisplay;
+    bool tryWaylandFirst = false;
+    char* sfml_backend = getenv("SFML_BACKEND");
+    if (sfml_backend && strcmp(sfml_backend, "wayland") == 0) {
+        tryWaylandFirst = true;
+    }
+    // The only reliable way to determine the display type is to try to connect.
+    // (but once connected, we'd like to keep the connection alive)
+    // TODO: precheck with WAYLAND_DISPLAY/WAYLAND_SOCKET and DISPLAY
+    if (tryWaylandFirst) {
+        tmpWaylandDisplay = OpenWaylandDisplay();
+        if (tmpWaylandDisplay) {
+            type = DisplayType::Wayland;
+            found_display = true;
+            return type;
+        }
+
+        tmpX11Display = OpenX11Display();
+        if (tmpX11Display) {
+            type = DisplayType::X11;
+            found_display = true;
+            return type;
+        }
+        err() << "Could neither connect to a Wayland nor an X11 display. Check if WAYLAND_DISPLAY or X11_DISPLAY is set" << std::endl;
+        std::abort();
+    } else {
+        tmpX11Display = OpenX11Display();
+        if (tmpX11Display) {
+            type = DisplayType::X11;
+            found_display = true;
+            return type;
+        }
+
+        // Do not try Wayland by default, because backend is unstable
+
+        err() << "Could not connect to an X11 display. Check if X11_DISPLAY is set" << std::endl;
+        std::abort();
+    }
 }
 
-
-////////////////////////////////////////////////////////////
-void CloseDisplay(Display* display)
-{
-    Lock lock(mutex);
-
-    assert(display == sharedDisplay);
-
-    referenceCount--;
-    if (referenceCount == 0)
-        XCloseDisplay(display);
-}
-
-
-////////////////////////////////////////////////////////////
-Atom getAtom(const std::string& name, bool onlyIfExists)
-{
-    AtomMap::const_iterator iter = atoms.find(name);
-
-    if (iter != atoms.end())
-        return iter->second;
-
-    Display* display = OpenDisplay();
-
-    Atom atom = XInternAtom(display, name.c_str(), onlyIfExists ? True : False);
-
-    CloseDisplay(display);
-
-    atoms[name] = atom;
-
-    return atom;
+void unrefDisplay() {
+    if (tmpWaylandDisplay) {
+        CloseWaylandDisplay(tmpWaylandDisplay);
+        tmpWaylandDisplay = NULL;
+    }
+    if (tmpX11Display) {
+        CloseX11Display(tmpX11Display);
+        tmpX11Display = NULL;
+    }
 }
 
 } // namespace priv

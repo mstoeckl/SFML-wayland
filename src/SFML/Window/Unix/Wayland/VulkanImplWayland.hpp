@@ -22,75 +22,82 @@
 //
 ////////////////////////////////////////////////////////////
 
-#ifndef SFML_CURSORIMPLUNIX_HPP
-#define SFML_CURSORIMPLUNIX_HPP
+#ifndef SFML_VULKANIMPLWAYLAND_HPP
+#define SFML_VULKANIMPLWAYLAND_HPP
 
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <SFML/Window/Cursor.hpp>
-#include <SFML/System/NonCopyable.hpp>
-#include <SFML/Window/Unix/Display.hpp>
+#include <SFML/Window/Vulkan.hpp>
+#include <SFML/Window/WindowHandle.hpp>
+#include <vector>
+
 
 namespace sf
 {
-
 namespace priv
 {
-class CursorImplX11;
-class CursorImplWayland;
-
 ////////////////////////////////////////////////////////////
-/// \brief Unix implementation of Cursor
+/// \brief Linux (X11) implementation of Vulkan
 ///
 ////////////////////////////////////////////////////////////
-class CursorImpl : NonCopyable
+class VulkanImplWayland
 {
 public:
 
     ////////////////////////////////////////////////////////////
-    /// \brief Default constructor
+    /// \brief Tell whether or not the system supports Vulkan
     ///
-    /// Refer to sf::Cursor::Cursor().
+    /// This function should always be called before using
+    /// the Vulkan features. If it returns false, then
+    /// any attempt to use Vulkan will fail.
+    ///
+    /// If only compute is required, set \a requireGraphics
+    /// to false to skip checking for the extensions necessary
+    /// for graphics rendering.
+    ///
+    /// \param requireGraphics
+    ///
+    /// \return True if Vulkan is supported, false otherwise
     ///
     ////////////////////////////////////////////////////////////
-    CursorImpl();
+    static bool isAvailable(bool requireGraphics = true);
 
     ////////////////////////////////////////////////////////////
-    /// \brief Destructor
+    /// \brief Get the address of a Vulkan function
     ///
-    /// Refer to sf::Cursor::~Cursor().
+    /// \param name Name of the function to get the address of
+    ///
+    /// \return Address of the Vulkan function, 0 on failure
     ///
     ////////////////////////////////////////////////////////////
-    ~CursorImpl();
+    static VulkanFunctionPointer getFunction(const char* name);
 
     ////////////////////////////////////////////////////////////
-    /// \brief Create a cursor with the provided image
+    /// \brief Get Vulkan instance extensions required for graphics
     ///
-    /// Refer to sf::Cursor::loadFromPixels().
+    /// \return Vulkan instance extensions required for graphics
     ///
     ////////////////////////////////////////////////////////////
-    bool loadFromPixels(const Uint8* pixels, Vector2u size, Vector2u hotspot);
+    static const std::vector<const char*>& getGraphicsRequiredInstanceExtensions();
 
     ////////////////////////////////////////////////////////////
-    /// \brief Create a native system cursor
+    /// \brief Create a Vulkan rendering surface
     ///
-    /// Refer to sf::Cursor::loadFromSystem().
+    /// \param instance     Vulkan instance
+    /// \param windowHandle Handle to the window to create the surface for
+    /// \param surface      Created surface
+    /// \param allocator    Allocator to use
+    ///
+    /// \return True if surface creation was successful, false otherwise
     ///
     ////////////////////////////////////////////////////////////
-    bool loadFromSystem(Cursor::Type type);
-
-private:
-    friend class WindowImplX11;
-    friend class WindowImplWayland;
-    union {
-        CursorImplX11 * m_x11;
-        CursorImplWayland * m_wayland;
-    };
+    static bool createVulkanSurface(const VkInstance& instance, WindowHandle windowHandle, VkSurfaceKHR& surface, const VkAllocationCallbacks* allocator);
 };
 
 } // namespace priv
 
 } // namespace sf
 
-#endif // SFML_CUSROSIMPLUNIX_HPP
+
+#endif // SFML_VULKANIMPLWAYLAND_HPP

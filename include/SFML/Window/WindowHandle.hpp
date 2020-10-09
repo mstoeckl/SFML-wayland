@@ -44,7 +44,8 @@ namespace sf
 
 #elif defined(SFML_SYSTEM_LINUX) || defined(SFML_SYSTEM_FREEBSD) || defined(SFML_SYSTEM_OPENBSD)
 
-    // Window handle is Window (unsigned long) on Unix - X11
+    // Window handle is Window (unsigned long) on Unix - X11.
+    // On Wayland, it's a pointer, which can be contained by an unsigned long
     typedef unsigned long WindowHandle;
 
 #elif defined(SFML_SYSTEM_MACOS)

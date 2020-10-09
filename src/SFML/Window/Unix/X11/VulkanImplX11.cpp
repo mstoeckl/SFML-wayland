@@ -25,8 +25,8 @@
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <SFML/Window/Unix/VulkanImplX11.hpp>
-#include <SFML/Window/Unix/Display.hpp>
+#include <SFML/Window/Unix/X11/VulkanImplX11.hpp>
+#include <SFML/Window/Unix/X11/DisplayX11.hpp>
 #include <dlfcn.h>
 #define VK_USE_PLATFORM_XLIB_KHR
 #define VK_NO_PROTOTYPES
@@ -210,12 +210,12 @@ bool VulkanImplX11::createVulkanSurface(const VkInstance& instance, WindowHandle
     // to the X display will stay open even after we open and close it here
     VkXlibSurfaceCreateInfoKHR surfaceCreateInfo = VkXlibSurfaceCreateInfoKHR();
     surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
-    surfaceCreateInfo.dpy = OpenDisplay();
+    surfaceCreateInfo.dpy = OpenX11Display();
     surfaceCreateInfo.window = windowHandle;
 
     bool result = (vkCreateXlibSurfaceKHR(instance, &surfaceCreateInfo, allocator, &surface) == VK_SUCCESS);
 
-    CloseDisplay(surfaceCreateInfo.dpy);
+    CloseX11Display(surfaceCreateInfo.dpy);
 
     return result;
 }

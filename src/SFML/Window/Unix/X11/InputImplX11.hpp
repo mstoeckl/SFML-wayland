@@ -22,8 +22,8 @@
 //
 ////////////////////////////////////////////////////////////
 
-#ifndef SFML_INPUTIMPLUNIX_HPP
-#define SFML_INPUTIMPLUNIX_HPP
+#ifndef SFML_INPUTIMPLX11_HPP
+#define SFML_INPUTIMPLX11_HPP
 
 ////////////////////////////////////////////////////////////
 // Headers
@@ -37,10 +37,10 @@ namespace sf
 namespace priv
 {
 ////////////////////////////////////////////////////////////
-/// \brief Linux (X11 or Wayland) implementation of inputs (keyboard + mouse)
+/// \brief Linux (X11) implementation of inputs (keyboard + mouse)
 ///
 ////////////////////////////////////////////////////////////
-class InputImpl
+class InputImplX11
 {
 public:
 
@@ -165,4 +165,4 @@ public:
 } // namespace sf
 
 
-#endif // SFML_INPUTIMPLUNIX_HPP
+#endif // SFML_INPUTIMPLX11_HPP

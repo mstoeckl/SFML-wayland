@@ -22,43 +22,49 @@
 //
 ////////////////////////////////////////////////////////////
 
-#ifndef SFML_SHAREDDISPLAY_HPP
-#define SFML_SHAREDDISPLAY_HPP
-
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <string>
+#include <SFML/Window/Unix/Wayland/CursorImplWayland.hpp>
+#include <SFML/Window/Unix/Wayland/DisplayWayland.hpp>
+#include <cassert>
+#include <cstdlib>
+#include <vector>
 
 namespace sf
 {
 namespace priv
 {
-enum DisplayType {
-    Wayland,
-    X11
-};
-////////////////////////////////////////////////////////////
-/// \brief Try to connect to a Wayland/X11 display, and report which works
-///
-/// This never returns Unknown.
-////////////////////////////////////////////////////////////
-enum DisplayType getDisplayType();
 
 ////////////////////////////////////////////////////////////
-/// \brief Close the connection made by getDisplayType
-///
-/// Call after getDisplayType has been used to pick a display, and after
-/// whatever class based on the display type has been initialized. (This
-/// ensures we don't "double-connnect".)
+CursorImplWayland::CursorImplWayland() :
+m_display(OpenWaylandDisplay())
+{
+    // That's it.
+}
+
+
 ////////////////////////////////////////////////////////////
-void unrefDisplay();
+CursorImplWayland::~CursorImplWayland()
+{
+    CloseWaylandDisplay(m_display);
+}
+
+
+////////////////////////////////////////////////////////////
+bool CursorImplWayland::loadFromPixels(const Uint8* pixels, Vector2u size, Vector2u hotspot)
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////
+bool CursorImplWayland::loadFromSystem(Cursor::Type type)
+{
+    return true;
+}
+
 
 } // namespace priv
 
 } // namespace sf
-
-
-#endif // SFML_SHAREDDISPLAY_HPP
-
 

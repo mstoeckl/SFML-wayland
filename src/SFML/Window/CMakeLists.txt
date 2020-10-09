@@ -82,7 +82,60 @@ if(SFML_OS_WINDOWS)
     # make sure that we use the Unicode version of the Win API functions
     add_definitions(-DUNICODE -D_UNICODE)
 elseif(SFML_OS_LINUX OR SFML_OS_FREEBSD OR SFML_OS_OPENBSD)
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/xdg-shell.h"
+        DEPENDS "${SRCROOT}/Unix/wayland-protocols/xdg-shell.xml"
+        COMMAND "${WAYLAND_SCANNER}"
+        ARGS client-header "${SRCROOT}/Unix/wayland-protocols/xdg-shell.xml" "${CMAKE_CURRENT_BINARY_DIR}/xdg-shell.h"
+    )
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pointer-constraints-unstable-v1.h"
+        DEPENDS "${SRCROOT}/Unix/wayland-protocols/pointer-constraints-unstable-v1.xml"
+        COMMAND "${WAYLAND_SCANNER}"
+        ARGS client-header "${SRCROOT}/Unix/wayland-protocols/pointer-constraints-unstable-v1.xml" "${CMAKE_CURRENT_BINARY_DIR}/pointer-constraints-unstable-v1.h"
+    )
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/relative-pointer-unstable-v1.h"
+        DEPENDS "${SRCROOT}/Unix/wayland-protocols/relative-pointer-unstable-v1.xml"
+        COMMAND "${WAYLAND_SCANNER}"
+        ARGS client-header "${SRCROOT}/Unix/wayland-protocols/relative-pointer-unstable-v1.xml" "${CMAKE_CURRENT_BINARY_DIR}/relative-pointer-unstable-v1.h"
+    )
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/xdg-decoration-unstable-v1.h"
+        DEPENDS "${SRCROOT}/Unix/wayland-protocols/xdg-decoration-unstable-v1.xml"
+        COMMAND "${WAYLAND_SCANNER}"
+        ARGS client-header "${SRCROOT}/Unix/wayland-protocols/xdg-decoration-unstable-v1.xml" "${CMAKE_CURRENT_BINARY_DIR}/xdg-decoration-unstable-v1.h"
+    )
+
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/xdg-shell.c"
+        DEPENDS "${SRCROOT}/Unix/wayland-protocols/xdg-shell.xml"
+        COMMAND "${WAYLAND_SCANNER}"
+        ARGS private-code "${SRCROOT}/Unix/wayland-protocols/xdg-shell.xml" "${CMAKE_CURRENT_BINARY_DIR}/xdg-shell.c"
+    )
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pointer-constraints-unstable-v1.c"
+        DEPENDS "${SRCROOT}/Unix/wayland-protocols/pointer-constraints-unstable-v1.xml"
+        COMMAND "${WAYLAND_SCANNER}"
+        ARGS private-code "${SRCROOT}/Unix/wayland-protocols/pointer-constraints-unstable-v1.xml" "${CMAKE_CURRENT_BINARY_DIR}/pointer-constraints-unstable-v1.c"
+    )
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/relative-pointer-unstable-v1.c"
+        DEPENDS "${SRCROOT}/Unix/wayland-protocols/relative-pointer-unstable-v1.xml"
+        COMMAND "${WAYLAND_SCANNER}"
+        ARGS private-code "${SRCROOT}/Unix/wayland-protocols/relative-pointer-unstable-v1.xml" "${CMAKE_CURRENT_BINARY_DIR}/relative-pointer-unstable-v1.c"
+    )
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/xdg-decoration-unstable-v1.c"
+        DEPENDS "${SRCROOT}/Unix/wayland-protocols/xdg-decoration-unstable-v1.xml"
+        COMMAND "${WAYLAND_SCANNER}"
+        ARGS private-code "${SRCROOT}/Unix/wayland-protocols/xdg-decoration-unstable-v1.xml" "${CMAKE_CURRENT_BINARY_DIR}/xdg-decoration-unstable-v1.c"
+    )
+
     set(PLATFORM_SRC
+        ${SRCROOT}/Unix/SensorImpl.cpp
+        ${SRCROOT}/Unix/SensorImpl.hpp
+        # Forwarding classes
         ${SRCROOT}/Unix/CursorImpl.hpp
         ${SRCROOT}/Unix/CursorImpl.cpp
         ${SRCROOT}/Unix/ClipboardImpl.hpp
@@ -91,19 +144,57 @@ elseif(SFML_OS_LINUX OR SFML_OS_FREEBSD OR SFML_OS_OPENBSD)
         ${SRCROOT}/Unix/Display.hpp
         ${SRCROOT}/Unix/InputImpl.cpp
         ${SRCROOT}/Unix/InputImpl.hpp
-        ${SRCROOT}/Unix/SensorImpl.cpp
-        ${SRCROOT}/Unix/SensorImpl.hpp
         ${SRCROOT}/Unix/VideoModeImpl.cpp
-        ${SRCROOT}/Unix/VulkanImplX11.cpp
-        ${SRCROOT}/Unix/VulkanImplX11.hpp
-        ${SRCROOT}/Unix/WindowImplX11.cpp
-        ${SRCROOT}/Unix/WindowImplX11.hpp
+        ${SRCROOT}/Unix/VulkanImpl.cpp
+        ${SRCROOT}/Unix/VulkanImpl.hpp
+        # Wayland sub-implementation
+        ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell.h
+        ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell.c
+        ${CMAKE_CURRENT_BINARY_DIR}/pointer-constraints-unstable-v1.h
+        ${CMAKE_CURRENT_BINARY_DIR}/pointer-constraints-unstable-v1.c
+        ${CMAKE_CURRENT_BINARY_DIR}/relative-pointer-unstable-v1.h
+        ${CMAKE_CURRENT_BINARY_DIR}/relative-pointer-unstable-v1.c
+        ${CMAKE_CURRENT_BINARY_DIR}/xdg-decoration-unstable-v1.h
+        ${CMAKE_CURRENT_BINARY_DIR}/xdg-decoration-unstable-v1.c
+        ${SRCROOT}/Unix/Wayland/ClipboardImplWayland.cpp
+        ${SRCROOT}/Unix/Wayland/ClipboardImplWayland.hpp
+        ${SRCROOT}/Unix/Wayland/CursorImplWayland.cpp
+        ${SRCROOT}/Unix/Wayland/CursorImplWayland.hpp
+        ${SRCROOT}/Unix/Wayland/DisplayWayland.cpp
+        ${SRCROOT}/Unix/Wayland/DisplayWayland.hpp
+        ${SRCROOT}/Unix/Wayland/InputImplWayland.cpp
+        ${SRCROOT}/Unix/Wayland/InputImplWayland.hpp
+        ${SRCROOT}/Unix/Wayland/VideoModeImplWayland.cpp
+        ${SRCROOT}/Unix/Wayland/VideoModeImplWayland.hpp
+        ${SRCROOT}/Unix/Wayland/VulkanImplWayland.cpp
+        ${SRCROOT}/Unix/Wayland/VulkanImplWayland.hpp
+        ${SRCROOT}/Unix/Wayland/WindowImplWayland.cpp
+        ${SRCROOT}/Unix/Wayland/WindowImplWayland.hpp
+        # X11 sub-implementation
+        ${SRCROOT}/Unix/X11/ClipboardImplX11.cpp
+        ${SRCROOT}/Unix/X11/ClipboardImplX11.hpp
+        ${SRCROOT}/Unix/X11/CursorImplX11.cpp
+        ${SRCROOT}/Unix/X11/CursorImplX11.hpp
+        ${SRCROOT}/Unix/X11/DisplayX11.cpp
+        ${SRCROOT}/Unix/X11/DisplayX11.hpp
+        ${SRCROOT}/Unix/X11/InputImplX11.cpp
+        ${SRCROOT}/Unix/X11/InputImplX11.hpp
+        ${SRCROOT}/Unix/X11/VideoModeImplX11.cpp
+        ${SRCROOT}/Unix/X11/VideoModeImplX11.hpp
+        ${SRCROOT}/Unix/X11/VulkanImplX11.cpp
+        ${SRCROOT}/Unix/X11/VulkanImplX11.hpp
+        ${SRCROOT}/Unix/X11/WindowImplX11.cpp
+        ${SRCROOT}/Unix/X11/WindowImplX11.hpp
     )
     if(NOT SFML_OS_ANDROID)
         set(PLATFORM_SRC
             ${PLATFORM_SRC}
-            ${SRCROOT}/Unix/GlxContext.cpp
-            ${SRCROOT}/Unix/GlxContext.hpp
+            ${SRCROOT}/Unix/GlContextUnix.cpp
+            ${SRCROOT}/Unix/GlContextUnix.hpp
+            ${SRCROOT}/Unix/X11/GlContextX11.cpp
+            ${SRCROOT}/Unix/X11/GlContextX11.hpp
+            ${SRCROOT}/Unix/Wayland/GlContextWayland.cpp
+            ${SRCROOT}/Unix/Wayland/GlContextWayland.hpp
         )
     endif()
     if(SFML_OS_LINUX)
@@ -246,6 +337,14 @@ target_include_directories(sfml-window PRIVATE "${PROJECT_SOURCE_DIR}/extlibs/he
 if(SFML_OS_LINUX OR SFML_OS_FREEBSD OR SFML_OPENBSD)
     sfml_find_package(X11 INCLUDE "X11_INCLUDE_DIR" LINK "X11_X11_LIB" "X11_Xrandr_LIB" "X11_Xcursor_LIB")
     target_link_libraries(sfml-window PRIVATE X11)
+
+    sfml_find_package(EGL INCLUDE "EGL_INCLUDE_DIR" LINK "EGL_LIBRARY")
+    target_link_libraries(sfml-window PRIVATE EGL)
+    sfml_find_package(Wayland INCLUDE "WAYLAND_CLIENT_INCLUDE_DIRS" "WAYLAND_EGL_INCLUDE_DIRS" LINK "WAYLAND_CLIENT_LIBRARIES" "WAYLAND_EGL_LIBRARIES")
+    target_link_libraries(sfml-window PRIVATE Wayland)
+    sfml_find_package(XKBCommon INCLUDE "XKB_COMMON_INCLUDE_DIRS" LINK "XKB_COMMON_LIBRARIES")
+    target_link_libraries(sfml-window PRIVATE XKBCommon)
+    target_include_directories(sfml-window PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/")
 endif()
 
 # CMake 3.11 and later prefer to choose GLVND, but we choose legacy OpenGL for backward compability
@@ -261,7 +360,7 @@ if(SFML_OS_IOS)
     target_link_libraries(sfml-window PRIVATE GLES)
 elseif(SFML_OS_ANDROID)
     sfml_find_package(GLES INCLUDE "GLES_INCLUDE_DIR" LINK "GLES_LIBRARY")
-    
+
     sfml_find_package(EGL INCLUDE "EGL_INCLUDE_DIR" LINK "EGL_LIBRARY")
     target_link_libraries(sfml-window PRIVATE EGL)
     target_link_libraries(sfml-window PRIVATE GLES)

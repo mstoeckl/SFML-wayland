@@ -22,15 +22,13 @@
 //
 ////////////////////////////////////////////////////////////
 
-#ifndef SFML_CLIPBOARDIMPLX11_HPP
-#define SFML_CLIPBOARDIMPLX11_HPP
+#ifndef SFML_CLIPBOARDIMPLUNIX_HPP
+#define SFML_CLIPBOARDIMPLUNIX_HPP
 
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/System/String.hpp>
-#include <X11/Xlib.h>
-#include <deque>
 
 
 namespace sf
@@ -79,72 +77,6 @@ public:
     ///
     ////////////////////////////////////////////////////////////
     static void processEvents();
-
-private:
-
-    ////////////////////////////////////////////////////////////
-    /// \brief Constructor
-    ///
-    ////////////////////////////////////////////////////////////
-    ClipboardImpl();
-
-    ////////////////////////////////////////////////////////////
-    /// \brief Destructor
-    ///
-    ////////////////////////////////////////////////////////////
-    ~ClipboardImpl();
-
-    ////////////////////////////////////////////////////////////
-    /// \brief Get singleton instance
-    ///
-    /// \return Singleton instance
-    ///
-    ////////////////////////////////////////////////////////////
-    static ClipboardImpl& getInstance();
-
-    ////////////////////////////////////////////////////////////
-    /// \brief getString implementation
-    ///
-    /// \return Current content of the clipboard
-    ///
-    ////////////////////////////////////////////////////////////
-    String getStringImpl();
-
-    ////////////////////////////////////////////////////////////
-    /// \brief setString implementation
-    ///
-    /// \param text sf::String object containing the data to be sent to the clipboard
-    ///
-    ////////////////////////////////////////////////////////////
-    void setStringImpl(const String& text);
-
-    ////////////////////////////////////////////////////////////
-    /// \brief processEvents implementation
-    ///
-    ////////////////////////////////////////////////////////////
-    void processEventsImpl();
-
-    ////////////////////////////////////////////////////////////
-    /// \brief Process an incoming event from the window
-    ///
-    /// \param windowEvent Event which has been received
-    ///
-    ////////////////////////////////////////////////////////////
-    void processEvent(XEvent& windowEvent);
-
-    ////////////////////////////////////////////////////////////
-    // Member data
-    ////////////////////////////////////////////////////////////
-    ::Window           m_window;            ///< X identifier defining our window
-    ::Display*         m_display;           ///< Pointer to the display
-    Atom               m_clipboard;         ///< X Atom identifying the CLIPBOARD selection
-    Atom               m_targets;           ///< X Atom identifying TARGETS
-    Atom               m_text;              ///< X Atom identifying TEXT
-    Atom               m_utf8String;        ///< X Atom identifying UTF8_STRING
-    Atom               m_targetProperty;    ///< X Atom identifying our destination window property
-    String             m_clipboardContents; ///< Our clipboard contents
-    std::deque<XEvent> m_events;            ///< Queue we use to store pending events for this window
-    bool               m_requestResponded;  ///< Holds whether our selection request has been responded to or not
 };
 
 } // namespace priv
@@ -152,4 +84,4 @@ private:
 } // namespace sf
 
 
-#endif // SFML_CLIPBOARDIMPLX11_HPP
+#endif // SFML_CLIPBOARDIMPLUNIX_HPP

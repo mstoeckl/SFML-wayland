@@ -22,8 +22,8 @@
 //
 ////////////////////////////////////////////////////////////
 
-#ifndef SFML_WINDOWIMPLX11_HPP
-#define SFML_WINDOWIMPLX11_HPP
+#ifndef SFML_WINDOWIMPLWAYLAND_HPP
+#define SFML_WINDOWIMPLWAYLAND_HPP
 
 ////////////////////////////////////////////////////////////
 // Headers
@@ -32,9 +32,8 @@
 #include <SFML/Window/WindowImpl.hpp>
 #include <SFML/System/String.hpp>
 #include <SFML/Window/WindowStyle.hpp> // Prevent conflict with macro None from Xlib
-#include <X11/Xlib.h>
 #include <deque>
-#include <X11/extensions/Xrandr.h>
+#include <SFML/Window/Unix/Wayland/DisplayWayland.hpp>
 
 
 namespace sf
@@ -45,7 +44,7 @@ namespace priv
 /// \brief Linux (X11) implementation of WindowImpl
 ///
 ////////////////////////////////////////////////////////////
-class WindowImplX11 : public WindowImpl
+class WindowImplWayland : public WindowImpl
 {
 public:
 
@@ -55,7 +54,7 @@ public:
     /// \param handle Platform-specific handle of the control
     ///
     ////////////////////////////////////////////////////////////
-    WindowImplX11(WindowHandle handle);
+    WindowImplWayland(WindowHandle handle);
 
     ////////////////////////////////////////////////////////////
     /// \brief Create the window implementation
@@ -66,13 +65,13 @@ public:
     /// \param settings Additional settings for the underlying OpenGL context
     ///
     ////////////////////////////////////////////////////////////
-    WindowImplX11(VideoMode mode, const String& title, unsigned long style, const ContextSettings& settings);
+    WindowImplWayland(VideoMode mode, const String& title, unsigned long style, const ContextSettings& settings);
 
     ////////////////////////////////////////////////////////////
     /// \brief Destructor
     ///
     ////////////////////////////////////////////////////////////
-    ~WindowImplX11();
+    ~WindowImplWayland();
 
     ////////////////////////////////////////////////////////////
     /// \brief Get the OS-specific handle of the window
@@ -187,7 +186,20 @@ public:
     ////////////////////////////////////////////////////////////
     virtual bool hasFocus() const;
 
-protected:
+
+
+    void xdg_surface_configure(struct xdg_surface *xdg_surface,
+                      uint32_t serial);
+    void xdg_toplevel_close(struct xdg_toplevel *xdg_toplevel);
+    void xdg_toplevel_configure(
+           struct xdg_toplevel *xdg_toplevel,
+           int32_t width,
+           int32_t height,
+             struct wl_array *states);
+
+    void handleWaylandPointerButton(uint32_t time,uint32_t button,uint32_t state);
+    void handleWaylandPointerMotion(uint32_t time,double x, double y);
+    void handleWaylandKeyboardKey(uint32_t time,uint32_t key,uint32_t state,bool shift, bool control, bool system, bool alt);
 
     ////////////////////////////////////////////////////////////
     /// \brief Process incoming events from the operating system
@@ -235,7 +247,7 @@ private:
     /// \param time Last time we received user input
     ///
     ////////////////////////////////////////////////////////////
-    void updateLastInputTime(::Time time);
+//    void updateLastInputTime(::Time time);
 
     ////////////////////////////////////////////////////////////
     /// \brief Do some common initializations after the window has been created
@@ -263,10 +275,10 @@ private:
     /// \return True if the event was processed, false if it was discarded
     ///
     ////////////////////////////////////////////////////////////
-    bool processEvent(XEvent& windowEvent);
+//    bool processEvent(XEvent& windowEvent);
 
     ////////////////////////////////////////////////////////////
-    /// \brief Check if a valid version of XRandR extension is present 
+    /// \brief Check if a valid version of XRandR extension is present
     ///
     /// \param xRandRMajor XRandR major version
     /// \param xRandRMinor XRandR minor version
@@ -274,7 +286,7 @@ private:
     /// \return True if a valid XRandR version found, false otherwise
     ///
     ////////////////////////////////////////////////////////////
-    bool checkXRandR(int& xRandRMajor, int& xRandRMinor);
+//    bool checkXRandR(int& xRandRMajor, int& xRandRMinor);
 
     ////////////////////////////////////////////////////////////
     /// \brief Get the RROutput of the primary monitor
@@ -287,7 +299,7 @@ private:
     /// \return RROutput of the primary monitor
     ///
     ////////////////////////////////////////////////////////////
-    RROutput getOutputPrimary(::Window& rootWindow, XRRScreenResources* res, int xRandRMajor, int xRandRMinor);
+//    RROutput getOutputPrimary(::Window& rootWindow, XRRScreenResources* res, int xRandRMajor, int xRandRMinor);
 
     ////////////////////////////////////////////////////////////
     /// \brief Get coordinates of the primary monitor
@@ -295,31 +307,45 @@ private:
     /// \return Position of the primary monitor
     ///
     ////////////////////////////////////////////////////////////
-    Vector2i getPrimaryMonitorPosition();
+//    Vector2i getPrimaryMonitorPosition();
 
     ////////////////////////////////////////////////////////////
     // Member data
     ////////////////////////////////////////////////////////////
-    ::Window           m_window;         ///< X identifier defining our window
-    ::Display*         m_display;        ///< Pointer to the display
+public:
+    WaylandDisplay*         m_display;        ///< Pointer to the display
+    struct wl_surface*      m_surface;
+    struct xdg_surface*     m_xdg_surface;
+    struct xdg_toplevel*    m_xdg_toplevel;
+    struct wl_egl_window*   m_egl_window;
+
+    bool m_xdg_initial_configure_seen;
+private:
     int                m_screen;         ///< Screen identifier
-    XIM                m_inputMethod;    ///< Input method linked to the X display
-    XIC                m_inputContext;   ///< Input context used to get unicode input in our window
-    std::deque<XEvent> m_events;         ///< Queue we use to store pending events for this window
+
+    std::deque<Event> m_new_events;
+    Vector2f          m_current_pointer_position; // as of new_event queue
+
+    Vector2u m_window_size;
+
+    //    ::Window           m_window;         ///< X identifier defining our window
+//    XIM                m_inputMethod;    ///< Input method linked to the X display
+//    XIC                m_inputContext;   ///< Input context used to get unicode input in our window
+//    std::deque<XEvent> m_events;         ///< Queue we use to store pending events for this window
     bool               m_isExternal;     ///< Tell whether the window has been created externally or by SFML
     int                m_oldVideoMode;   ///< Video mode in use before we switch to fullscreen
-    RRCrtc             m_oldRRCrtc;      ///< RRCrtc in use before we switch to fullscreen
-    ::Cursor           m_hiddenCursor;   ///< As X11 doesn't provide cursor hiding, we must create a transparent one
-    ::Cursor           m_lastCursor;     ///< Last cursor used -- this data is not owned by the window and is required to be always valid
+//    RRCrtc             m_oldRRCrtc;      ///< RRCrtc in use before we switch to fullscreen
+//    ::Cursor           m_hiddenCursor;   ///< As X11 doesn't provide cursor hiding, we must create a transparent one
+//    ::Cursor           m_lastCursor;     ///< Last cursor used -- this data is not owned by the window and is required to be always valid
     bool               m_keyRepeat;      ///< Is the KeyRepeat feature enabled?
     Vector2i           m_previousSize;   ///< Previous size of the window, to find if a ConfigureNotify event is a resize event (could be a move event only)
     bool               m_useSizeHints;   ///< Is the size of the window fixed with size hints?
     bool               m_fullscreen;     ///< Is the window in fullscreen?
     bool               m_cursorGrabbed;  ///< Is the mouse cursor trapped?
     bool               m_windowMapped;   ///< Has the window been mapped by the window manager?
-    Pixmap             m_iconPixmap;     ///< The current icon pixmap if in use
-    Pixmap             m_iconMaskPixmap; ///< The current icon mask pixmap if in use
-    ::Time             m_lastInputTime;  ///< Last time we received user input
+//    Pixmap             m_iconPixmap;     ///< The current icon pixmap if in use
+//    Pixmap             m_iconMaskPixmap; ///< The current icon mask pixmap if in use
+//    ::Time             m_lastInputTime;  ///< Last time we received user input
 };
 
 } // namespace priv
@@ -327,4 +353,4 @@ private:
 } // namespace sf
 
 
-#endif // SFML_WINDOWIMPLX11_HPP
+#endif // SFML_WINDOWIMPLWAYLAND_HPP

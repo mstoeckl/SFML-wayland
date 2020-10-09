@@ -266,7 +266,6 @@ protected:
     virtual void processEvents() = 0;
 
 private:
-
     ////////////////////////////////////////////////////////////
     /// \brief Read the joysticks state and generate the appropriate events
     ///

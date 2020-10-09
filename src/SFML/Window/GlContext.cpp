@@ -65,8 +65,8 @@
 
     #else
 
-        #include <SFML/Window/Unix/GlxContext.hpp>
-        typedef sf::priv::GlxContext ContextType;
+        #include <SFML/Window/Unix/GlContextUnix.hpp>
+        typedef sf::priv::GlContextUnix ContextType;
 
     #endif
 

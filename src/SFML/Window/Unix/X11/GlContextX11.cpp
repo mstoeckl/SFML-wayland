@@ -26,9 +26,9 @@
 // Headers
 ////////////////////////////////////////////////////////////
 #define SF_GLAD_GLX_IMPLEMENTATION
-#include <SFML/Window/Unix/WindowImplX11.hpp> // important to be included first (conflict with None)
-#include <SFML/Window/Unix/GlxContext.hpp>
-#include <SFML/Window/Unix/Display.hpp>
+#include <SFML/Window/Unix/X11/WindowImplX11.hpp> // important to be included first (conflict with None)
+#include <SFML/Window/Unix/X11/GlContextX11.hpp>
+#include <SFML/Window/Unix/X11/DisplayX11.hpp>
 #include <SFML/System/Mutex.hpp>
 #include <SFML/System/Lock.hpp>
 #include <SFML/System/Err.hpp>
@@ -111,7 +111,7 @@ m_ownsWindow(false)
     m_settings = ContextSettings();
 
     // Open the connection with the X server
-    m_display = OpenDisplay();
+    m_display = OpenX11Display();
 
     // Make sure that extensions are initialized
     ensureExtensionsInit(m_display, DefaultScreen(m_display));
@@ -136,7 +136,7 @@ m_ownsWindow(false)
     m_settings = settings;
 
     // Open the connection with the X server
-    m_display = OpenDisplay();
+    m_display = OpenX11Display();
 
     // Make sure that extensions are initialized
     ensureExtensionsInit(m_display, DefaultScreen(m_display));
@@ -161,7 +161,7 @@ m_ownsWindow(false)
     m_settings = settings;
 
     // Open the connection with the X server
-    m_display = OpenDisplay();
+    m_display = OpenX11Display();
 
     // Make sure that extensions are initialized
     ensureExtensionsInit(m_display, DefaultScreen(m_display));
@@ -210,7 +210,7 @@ GlxContext::~GlxContext()
     }
 
     // Close the connection with the X server
-    CloseDisplay(m_display);
+    CloseX11Display(m_display);
 }
 
 

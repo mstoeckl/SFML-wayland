@@ -22,43 +22,40 @@
 //
 ////////////////////////////////////////////////////////////
 
-#ifndef SFML_SHAREDDISPLAY_HPP
-#define SFML_SHAREDDISPLAY_HPP
-
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <string>
+#include <SFML/Window/Unix/Wayland/VideoModeImplWayland.hpp>
+#include <SFML/Window/Unix/Wayland/DisplayWayland.hpp>
+#include <SFML/System/Err.hpp>
+#include <algorithm>
+
 
 namespace sf
 {
 namespace priv
 {
-enum DisplayType {
-    Wayland,
-    X11
-};
 ////////////////////////////////////////////////////////////
-/// \brief Try to connect to a Wayland/X11 display, and report which works
-///
-/// This never returns Unknown.
-////////////////////////////////////////////////////////////
-enum DisplayType getDisplayType();
+std::vector<VideoMode> VideoModeImplWayland::getFullscreenModes()
+{
+    std::vector<VideoMode> modes;
+
+    // TODO: use xdg_output to get display size!
+    modes.push_back(VideoMode(1024, 768));
+    return modes;
+}
+
 
 ////////////////////////////////////////////////////////////
-/// \brief Close the connection made by getDisplayType
-///
-/// Call after getDisplayType has been used to pick a display, and after
-/// whatever class based on the display type has been initialized. (This
-/// ensures we don't "double-connnect".)
-////////////////////////////////////////////////////////////
-void unrefDisplay();
+VideoMode VideoModeImplWayland::getDesktopMode()
+{
+    VideoMode desktopMode;
+
+    // TODO: use xdg_output to get display size!
+    desktopMode = VideoMode(1024, 768);
+    return desktopMode;
+}
 
 } // namespace priv
 
 } // namespace sf
-
-
-#endif // SFML_SHAREDDISPLAY_HPP
-
-

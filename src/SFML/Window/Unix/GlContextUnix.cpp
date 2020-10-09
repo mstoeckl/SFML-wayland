@@ -25,12 +25,14 @@
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <SFML/Window/Window.hpp> // important to be included first (conflict with None)
-#include <SFML/Window/Unix/Wayland/InputImplWayland.hpp>
-#include <SFML/Window/Unix/X11/InputImplX11.hpp>
-#include <SFML/Window/Unix/InputImpl.hpp>
+#include <SFML/Window/Unix/GlContextUnix.hpp>
 #include <SFML/Window/Unix/Display.hpp>
+#include <SFML/Window/Unix/X11/GlContextX11.hpp>
+#include <SFML/Window/Unix/Wayland/GlContextWayland.hpp>
+#include <SFML/System/Mutex.hpp>
+#include <SFML/System/Lock.hpp>
 #include <SFML/System/Err.hpp>
+#include <vector>
 
 namespace sf
 {
@@ -38,130 +40,114 @@ namespace priv
 {
 
 ////////////////////////////////////////////////////////////
-bool InputImpl::isKeyPressed(Keyboard::Key key) {
+GlContextUnix::GlContextUnix(GlContextUnix* shared) {
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        m_wayland = new GlContextWayland(shared ? shared->m_wayland : NULL);
+    } else {
+        m_x11 = new GlxContext(shared ? shared->m_x11 : NULL);
+    }
+    unrefDisplay();
+}
+
+////////////////////////////////////////////////////////////
+GlContextUnix::GlContextUnix(GlContextUnix* shared, const ContextSettings& settings, const WindowImpl* owner, unsigned int bitsPerPixel) {
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        m_wayland = new GlContextWayland(shared ? shared->m_wayland : NULL, settings, owner, bitsPerPixel);
+    } else {
+        m_x11 = new GlxContext(shared ? shared->m_x11 : NULL, settings, owner, bitsPerPixel);
+    }
+    unrefDisplay();
+}
+
+////////////////////////////////////////////////////////////
+GlContextUnix::GlContextUnix(GlContextUnix* shared, const ContextSettings& settings, unsigned int width, unsigned int height) {
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        m_wayland = new GlContextWayland(shared ? shared->m_wayland : NULL, settings, width, height);
+    } else {
+        m_x11 = new GlxContext(shared ? shared->m_x11 : NULL, settings, width, height);
+    }
+    unrefDisplay();
+}
+
+////////////////////////////////////////////////////////////
+GlContextUnix::~GlContextUnix() {
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        delete m_wayland;
+    } else if (displayType == X11) {
+        delete m_x11;
+    }
+}
+
+////////////////////////////////////////////////////////////
+GlFunctionPointer GlContextUnix::getFunction(const char* name) {
+    GlFunctionPointer r;
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        r = GlContextWayland::getFunction(name);
+    } else {
+        r = GlxContext::getFunction(name);
+    }
+    unrefDisplay();
+    return r;
+}
+
+////////////////////////////////////////////////////////////
+/// \brief Activate the context as the current target for rendering
+///
+/// \param current Whether to make the context current or no longer current
+///
+/// \return True on success, false if any error happened
+///
+////////////////////////////////////////////////////////////
+bool GlContextUnix::makeCurrent(bool current) {
     bool r;
     DisplayType displayType = getDisplayType();
     if (displayType == Wayland) {
-        r = InputImplWayland::isKeyPressed(key);
+        r = m_wayland->makeCurrent(current);
     } else {
-        r = InputImplX11::isKeyPressed(key);
+        r = m_x11->makeCurrent(current);
     }
-    unrefDisplay();
-    return r;
-
-}
-
-////////////////////////////////////////////////////////////
-void InputImpl::setVirtualKeyboardVisible(bool visible) {
-    DisplayType displayType = getDisplayType();
-    if (displayType == Wayland) {
-        InputImplWayland::setVirtualKeyboardVisible(visible);
-    } else {
-        InputImplX11::setVirtualKeyboardVisible(visible);
-    }
-    unrefDisplay();
-}
-
-////////////////////////////////////////////////////////////
-bool InputImpl::isMouseButtonPressed(Mouse::Button button) {
-    bool r;
-    DisplayType displayType = getDisplayType();
-    if (displayType == Wayland) {
-        r = InputImplWayland::isMouseButtonPressed(button);
-    } else {
-        r = InputImplX11::isMouseButtonPressed(button);
-    }
-    unrefDisplay();
     return r;
 }
 
 ////////////////////////////////////////////////////////////
-Vector2i InputImpl::getMousePosition() {
-    Vector2i r;
-    DisplayType displayType = getDisplayType();
-    if (displayType == Wayland) {
-        r = InputImplWayland::getMousePosition();
-    } else {
-        r = InputImplX11::getMousePosition();
-    }
-    unrefDisplay();
-    return r;
-}
+/// \brief Display what has been rendered to the context so far
+///
 ////////////////////////////////////////////////////////////
-Vector2i InputImpl::getMousePosition(const WindowBase& relativeTo) {
-    Vector2i r;
+void GlContextUnix::display() {
     DisplayType displayType = getDisplayType();
     if (displayType == Wayland) {
-        r = InputImplWayland::getMousePosition(relativeTo);
+        m_wayland->display();
     } else {
-        r = InputImplX11::getMousePosition(relativeTo);
+        m_x11->display();
     }
-    unrefDisplay();
-    return r;
 }
 
 ////////////////////////////////////////////////////////////
-void InputImpl::setMousePosition(const Vector2i& position) {
+/// \brief Enable or disable vertical synchronization
+///
+/// Activating vertical synchronization will limit the number
+/// of frames displayed to the refresh rate of the monitor.
+/// This can avoid some visual artifacts, and limit the framerate
+/// to a good value (but not constant across different computers).
+///
+/// \param enabled True to enable v-sync, false to deactivate
+///
+////////////////////////////////////////////////////////////
+void GlContextUnix::setVerticalSyncEnabled(bool enabled) {
     DisplayType displayType = getDisplayType();
     if (displayType == Wayland) {
-        InputImplWayland::setMousePosition(position);
+        m_wayland->setVerticalSyncEnabled(enabled);
     } else {
-        InputImplX11::setMousePosition(position);
+        m_x11->setVerticalSyncEnabled(enabled);
     }
-    unrefDisplay();
 }
 
-////////////////////////////////////////////////////////////
-void InputImpl::setMousePosition(const Vector2i& position, const WindowBase& relativeTo) {
-    DisplayType displayType = getDisplayType();
-    if (displayType == Wayland) {
-        InputImplWayland::setMousePosition(position, relativeTo);
-    } else {
-        InputImplX11::setMousePosition(position, relativeTo);
-    }
-    unrefDisplay();
-}
-
-////////////////////////////////////////////////////////////
-bool InputImpl::isTouchDown(unsigned int finger) {
-    bool r;
-    DisplayType displayType = getDisplayType();
-    if (displayType == Wayland) {
-        r = InputImplWayland::isTouchDown(finger);
-    } else {
-        r = InputImplX11::isTouchDown(finger);
-    }
-    unrefDisplay();
-    return r;
-}
-
-////////////////////////////////////////////////////////////
-Vector2i InputImpl::getTouchPosition(unsigned int finger) {
-    Vector2i r;
-    DisplayType displayType = getDisplayType();
-    if (displayType == Wayland) {
-        r = InputImplWayland::getTouchPosition(finger);
-    } else {
-        r = InputImplX11::getTouchPosition(finger);
-    }
-    unrefDisplay();
-    return r;
-}
-
-////////////////////////////////////////////////////////////
-Vector2i InputImpl::getTouchPosition(unsigned int finger, const WindowBase& relativeTo) {
-    Vector2i r;
-    DisplayType displayType = getDisplayType();
-    if (displayType == Wayland) {
-        r = InputImplWayland::getTouchPosition(finger, relativeTo);
-    } else {
-        r = InputImplX11::getTouchPosition(finger, relativeTo);
-    }
-    unrefDisplay();
-    return r;
-}
 
 } // namespace priv
 
 } // namespace sf
-

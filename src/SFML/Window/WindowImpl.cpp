@@ -43,11 +43,12 @@
 
 #elif defined(SFML_SYSTEM_LINUX) || defined(SFML_SYSTEM_FREEBSD) || defined(SFML_SYSTEM_OPENBSD)
 
-    #include <SFML/Window/Unix/WindowImplX11.hpp>
-    typedef sf::priv::WindowImplX11 WindowImplType;
+    #include <SFML/Window/Unix/Wayland/WindowImplWayland.hpp>
+    #include <SFML/Window/Unix/X11/WindowImplX11.hpp>
+    #include <SFML/Window/Unix/Display.hpp>
 
-    #include <SFML/Window/Unix/VulkanImplX11.hpp>
-    typedef sf::priv::VulkanImplX11 VulkanImplType;
+    #include <SFML/Window/Unix/VulkanImpl.hpp>
+    typedef sf::priv::VulkanImpl VulkanImplType;
 
 #elif defined(SFML_SYSTEM_MACOS)
 
@@ -77,6 +78,34 @@ namespace sf
 {
 namespace priv
 {
+#if defined(SFML_SYSTEM_LINUX) || defined(SFML_SYSTEM_FREEBSD) || defined(SFML_SYSTEM_OPENBSD)
+// TOOD: should we alternatively make a WindowImplType::create() ?
+
+////////////////////////////////////////////////////////////
+WindowImpl* WindowImpl::create(VideoMode mode, const String& title, Uint32 style, const ContextSettings& settings)
+{
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        return new WindowImplWayland(mode, title, style, settings);
+    } else {
+        return new WindowImplX11(mode, title, style, settings);
+    }
+    unrefDisplay();
+}
+
+
+////////////////////////////////////////////////////////////
+WindowImpl* WindowImpl::create(WindowHandle handle)
+{
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        return new WindowImplWayland(handle);
+    } else {
+        return new WindowImplX11(handle);
+    }
+    unrefDisplay();
+}
+#else
 ////////////////////////////////////////////////////////////
 WindowImpl* WindowImpl::create(VideoMode mode, const String& title, Uint32 style, const ContextSettings& settings)
 {
@@ -89,7 +118,7 @@ WindowImpl* WindowImpl::create(WindowHandle handle)
 {
     return new WindowImplType(handle);
 }
-
+#endif
 
 ////////////////////////////////////////////////////////////
 WindowImpl::WindowImpl() :

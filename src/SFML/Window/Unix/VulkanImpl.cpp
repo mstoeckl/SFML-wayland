@@ -25,56 +25,64 @@
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <SFML/Window/VideoModeImpl.hpp>
-#include <SFML/Window/Unix/X11/VideoModeImplX11.hpp>
-#include <SFML/Window/Unix/Wayland/VideoModeImplWayland.hpp>
+#include <SFML/Window/Unix/X11/VulkanImplX11.hpp>
+#include <SFML/Window/Unix/Wayland/VulkanImplWayland.hpp>
+#include <SFML/Window/Unix/VulkanImpl.hpp>
 #include <SFML/Window/Unix/Display.hpp>
-#include <SFML/System/Err.hpp>
-//#include <X11/Xlib.h>
-//#include <X11/extensions/Xrandr.h>
-#include <algorithm>
-
 
 namespace sf
 {
 namespace priv
 {
-////////////////////////////////////////////////////////////
-/// \brief Get the list of all the supported fullscreen video modes
-///
-/// \return Array filled with the fullscreen video modes
-///
-////////////////////////////////////////////////////////////
-std::vector<VideoMode> VideoModeImpl::getFullscreenModes() {
-    std::vector<VideoMode> r;
+bool VulkanImpl::isAvailable(bool requireGraphics) {
+    bool r;
     DisplayType displayType = getDisplayType();
     if (displayType == Wayland) {
-        r = VideoModeImplWayland::getFullscreenModes();
+        r = VulkanImplWayland::isAvailable(requireGraphics);
     } else {
-        r = VideoModeImplX11::getFullscreenModes();
+        r = VulkanImplX11::isAvailable(requireGraphics);
     }
     unrefDisplay();
     return r;
 }
 
-////////////////////////////////////////////////////////////
-/// \brief Get the current desktop video mode
-///
-/// \return Current desktop video mode
-///
-////////////////////////////////////////////////////////////
-VideoMode VideoModeImpl::getDesktopMode() {
-    VideoMode r;
+VulkanFunctionPointer VulkanImpl::getFunction(const char* name) {
+    VulkanFunctionPointer r;
     DisplayType displayType = getDisplayType();
     if (displayType == Wayland) {
-        r = VideoModeImplWayland::getDesktopMode();
+        r = VulkanImplWayland::getFunction(name);
     } else {
-        r = VideoModeImplX11::getDesktopMode();
+        r = VulkanImplX11::getFunction(name);
     }
     unrefDisplay();
     return r;
 }
 
-} // namespace priv
+const std::vector<const char*>& VulkanImpl::getGraphicsRequiredInstanceExtensions() {
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        const std::vector<const char*>& r = VulkanImplWayland::getGraphicsRequiredInstanceExtensions();
+        unrefDisplay();
+        return r;
+    } else {
+        const std::vector<const char*>& r = VulkanImplX11::getGraphicsRequiredInstanceExtensions();
+        unrefDisplay();
+        return r;
+    }
+}
+
+bool VulkanImpl::createVulkanSurface(const VkInstance& instance, WindowHandle windowHandle, VkSurfaceKHR& surface, const VkAllocationCallbacks* allocator) {
+    bool r;
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        r = VulkanImplWayland::createVulkanSurface(instance, windowHandle, surface, allocator);
+    } else {
+        r = VulkanImplX11::createVulkanSurface(instance, windowHandle, surface, allocator);
+    }
+    unrefDisplay();
+    return r;
+}
+
+}
 
 } // namespace sf

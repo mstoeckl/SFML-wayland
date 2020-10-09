@@ -22,43 +22,47 @@
 //
 ////////////////////////////////////////////////////////////
 
-#ifndef SFML_SHAREDDISPLAY_HPP
-#define SFML_SHAREDDISPLAY_HPP
+#ifndef SFML_VIDEOMODEIMPLWAYLAND_HPP
+#define SFML_VIDEOMODEIMPLWAYLAND_HPP
 
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <string>
+#include <SFML/Window/VideoMode.hpp>
+
 
 namespace sf
 {
 namespace priv
 {
-enum DisplayType {
-    Wayland,
-    X11
-};
 ////////////////////////////////////////////////////////////
-/// \brief Try to connect to a Wayland/X11 display, and report which works
+/// \brief OS-specific implementation of video modes functions
 ///
-/// This never returns Unknown.
 ////////////////////////////////////////////////////////////
-enum DisplayType getDisplayType();
+class VideoModeImplWayland
+{
+public:
 
-////////////////////////////////////////////////////////////
-/// \brief Close the connection made by getDisplayType
-///
-/// Call after getDisplayType has been used to pick a display, and after
-/// whatever class based on the display type has been initialized. (This
-/// ensures we don't "double-connnect".)
-////////////////////////////////////////////////////////////
-void unrefDisplay();
+    ////////////////////////////////////////////////////////////
+    /// \brief Get the list of all the supported fullscreen video modes
+    ///
+    /// \return Array filled with the fullscreen video modes
+    ///
+    ////////////////////////////////////////////////////////////
+    static std::vector<VideoMode> getFullscreenModes();
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Get the current desktop video mode
+    ///
+    /// \return Current desktop video mode
+    ///
+    ////////////////////////////////////////////////////////////
+    static VideoMode getDesktopMode();
+};
 
 } // namespace priv
 
 } // namespace sf
 
 
-#endif // SFML_SHAREDDISPLAY_HPP
-
-
+#endif // SFML_VIDEOMODEIMPLWAYLAND_HPP

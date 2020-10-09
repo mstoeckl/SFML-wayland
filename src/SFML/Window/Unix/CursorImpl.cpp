@@ -27,12 +27,8 @@
 ////////////////////////////////////////////////////////////
 #include <SFML/Window/Unix/CursorImpl.hpp>
 #include <SFML/Window/Unix/Display.hpp>
-#include <X11/cursorfont.h>
-#include <X11/Xutil.h>
-#include <X11/Xcursor/Xcursor.h>
-#include <cassert>
-#include <cstdlib>
-#include <vector>
+#include <SFML/Window/Unix/X11/CursorImplX11.hpp>
+#include <SFML/Window/Unix/Wayland/CursorImplWayland.hpp>
 
 namespace sf
 {
@@ -40,162 +36,49 @@ namespace priv
 {
 
 ////////////////////////////////////////////////////////////
-CursorImpl::CursorImpl() :
-m_display(OpenDisplay()),
-m_cursor(None)
+CursorImpl::CursorImpl()
 {
-    // That's it.
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        m_wayland = new CursorImplWayland();
+    } else {
+        m_x11 = new CursorImplX11();
+    }
+    unrefDisplay();
 }
 
 
 ////////////////////////////////////////////////////////////
 CursorImpl::~CursorImpl()
 {
-    release();
-
-    CloseDisplay(m_display);
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        delete m_wayland;
+    } else {
+        delete m_x11;
+    }
 }
 
 
 ////////////////////////////////////////////////////////////
 bool CursorImpl::loadFromPixels(const Uint8* pixels, Vector2u size, Vector2u hotspot)
 {
-    release();
-
-    if (isColorCursorSupported())
-        return loadFromPixelsARGB(pixels, size, hotspot);
-    else
-        return loadFromPixelsMonochrome(pixels, size, hotspot);
-}
-
-
-////////////////////////////////////////////////////////////
-bool CursorImpl::loadFromPixelsARGB(const Uint8* pixels, Vector2u size, Vector2u hotspot)
-{
-    // Create cursor image, convert from RGBA to ARGB.
-    XcursorImage* cursorImage = XcursorImageCreate(size.x, size.y);
-    cursorImage->xhot = hotspot.x;
-    cursorImage->yhot = hotspot.y;
-
-    const std::size_t numPixels = size.x * size.y;
-    for (std::size_t pixelIndex = 0; pixelIndex < numPixels; ++pixelIndex)
-    {
-        cursorImage->pixels[pixelIndex] = pixels[pixelIndex * 4 + 2] +
-                                         (pixels[pixelIndex * 4 + 1] << 8) +
-                                         (pixels[pixelIndex * 4 + 0] << 16) +
-                                         (pixels[pixelIndex * 4 + 3] << 24);
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        return m_wayland->loadFromPixels(pixels, size, hotspot);
+    } else {
+        return m_x11->loadFromPixels(pixels, size, hotspot);
     }
-
-    // Create the cursor.
-    m_cursor = XcursorImageLoadCursor(m_display, cursorImage);
-
-    // Free the resources
-    XcursorImageDestroy(cursorImage);
-
-    // We assume everything went fine...
-    return true;
 }
-
-
-////////////////////////////////////////////////////////////
-bool CursorImpl::loadFromPixelsMonochrome(const Uint8* pixels, Vector2u size, Vector2u hotspot)
-{
-    // Convert the image into a bitmap (monochrome!).
-    // The bit data is stored packed into bytes. If the number of pixels on each row of the image
-    // does not fit exactly into (width/8) bytes, one extra byte is allocated at the end of each
-    // row to store the extra pixels.
-    std::size_t packedWidth = (size.x + 7) / 8;
-    std::size_t bytes = packedWidth * size.y;
-    std::vector<Uint8> mask(bytes, 0); // Defines which pixel is opaque (1) or transparent (0).
-    std::vector<Uint8> data(bytes, 0); // Defines which pixel is white (1) or black (0).
-
-    for (std::size_t j = 0; j < size.y; ++j)
-    {
-        for (std::size_t i = 0; i < size.x; ++i)
-        {
-            std::size_t pixelIndex = i + j * size.x;
-            std::size_t byteIndex  = i / 8 + j * packedWidth;
-            std::size_t bitIndex   = i % 8;
-
-            // Turn on pixel that are not transparent
-            Uint8 opacity = pixels[pixelIndex * 4 + 3] > 0 ? 1 : 0;
-            mask[byteIndex] |= opacity << bitIndex;
-
-            // Choose between black/background & white/foreground color for each pixel,
-            // based on the pixel color intensity: on average, if a channel is "active"
-            // at 50%, the bit is white.
-            int intensity = (pixels[pixelIndex * 4 + 0] + pixels[pixelIndex * 4 + 1] + pixels[pixelIndex * 4 + 2]) / 3;
-            Uint8 bit = intensity > 128 ? 1 : 0;
-            data[byteIndex] |= bit << bitIndex;
-        }
-    }
-
-    Pixmap maskPixmap = XCreateBitmapFromData(m_display, XDefaultRootWindow(m_display),
-                                              (char*)&mask[0], size.x, size.y);
-    Pixmap dataPixmap = XCreateBitmapFromData(m_display, XDefaultRootWindow(m_display),
-                                              (char*)&data[0], size.x, size.y);
-
-    // Define the foreground color as white and the background as black.
-    XColor fg, bg;
-    fg.red = fg.blue = fg.green = -1;
-    bg.red = bg.blue = bg.green =  0;
-
-    // Create the monochrome cursor.
-    m_cursor = XCreatePixmapCursor(m_display,
-                                   dataPixmap, maskPixmap,
-                                   &fg, &bg,
-                                   hotspot.x, hotspot.y);
-
-    // Free the resources
-    XFreePixmap(m_display, dataPixmap);
-    XFreePixmap(m_display, maskPixmap);
-
-    // We assume everything went fine...
-    return true;
-}
-
 
 ////////////////////////////////////////////////////////////
 bool CursorImpl::loadFromSystem(Cursor::Type type)
 {
-    release();
-
-    unsigned int shape;
-    switch (type)
-    {
-        default: return false;
-
-        case Cursor::Arrow:          shape = XC_arrow;              break;
-        case Cursor::Wait:           shape = XC_watch;              break;
-        case Cursor::Text:           shape = XC_xterm;              break;
-        case Cursor::Hand:           shape = XC_hand1;              break;
-        case Cursor::SizeHorizontal: shape = XC_sb_h_double_arrow;  break;
-        case Cursor::SizeVertical:   shape = XC_sb_v_double_arrow;  break;
-        case Cursor::SizeAll:        shape = XC_fleur;              break;
-        case Cursor::Cross:          shape = XC_crosshair;          break;
-        case Cursor::Help:           shape = XC_question_arrow;     break;
-        case Cursor::NotAllowed:     shape = XC_X_cursor;           break;
-    }
-
-    m_cursor = XCreateFontCursor(m_display, shape);
-    return true;
-}
-
-
-////////////////////////////////////////////////////////////
-bool CursorImpl::isColorCursorSupported()
-{
-    return XcursorSupportsARGB(m_display);
-}
-
-
-////////////////////////////////////////////////////////////
-void CursorImpl::release()
-{
-    if (m_cursor != None)
-    {
-        XFreeCursor(m_display, m_cursor);
-        m_cursor = None;
+    DisplayType displayType = getDisplayType();
+    if (displayType == Wayland) {
+        return m_wayland->loadFromSystem(type);
+    } else {
+        return m_x11->loadFromSystem(type);
     }
 }
 
