@@ -317,6 +317,7 @@ public:
     struct wl_surface*      m_surface;
     struct xdg_surface*     m_xdg_surface;
     struct xdg_toplevel*    m_xdg_toplevel;
+    struct zxdg_toplevel_decoration_v1* m_xdg_toplevel_deco;
     struct wl_egl_window*   m_egl_window;
 
     bool m_xdg_initial_configure_seen;

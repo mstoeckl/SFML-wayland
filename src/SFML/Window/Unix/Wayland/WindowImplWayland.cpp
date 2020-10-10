@@ -347,6 +347,9 @@ m_xdg_initial_configure_seen(false)
     xdg_surface_add_listener(m_xdg_surface, &window_xdg_surface_listener, this);
     xdg_toplevel_add_listener(m_xdg_toplevel, &window_xdg_toplevel_listener, this);
 
+    m_xdg_toplevel_deco = zxdg_decoration_manager_v1_get_toplevel_decoration(m_display->decoration_manager, m_xdg_toplevel);
+    zxdg_toplevel_decoration_v1_set_mode(m_xdg_toplevel_deco, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+
     xdg_toplevel_set_title(m_xdg_toplevel, (const char*)title.toUtf8().c_str());
     wl_surface_commit(m_surface);
 
@@ -430,6 +433,7 @@ void WindowImplWayland::setSize(const Vector2u& size)
 ////////////////////////////////////////////////////////////
 void WindowImplWayland::setTitle(const String& title)
 {
+    xdg_toplevel_set_title(m_xdg_toplevel, (const char*)title.toUtf8().c_str());
 }
 
 
