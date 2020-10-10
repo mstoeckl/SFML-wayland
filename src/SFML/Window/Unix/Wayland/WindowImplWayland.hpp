@@ -200,6 +200,10 @@ public:
     void handleWaylandPointerButton(uint32_t time,uint32_t button,uint32_t state);
     void handleWaylandPointerMotion(uint32_t time,double x, double y);
     void handleWaylandKeyboardKey(uint32_t time,uint32_t key,uint32_t state,bool shift, bool control, bool system, bool alt);
+    void handleWaylandPointerEnter();
+    void handleWaylandPointerLeave();
+    void handleWaylandKeyboardEnter();
+    void handleWaylandKeyboardLeave();
 
     ////////////////////////////////////////////////////////////
     /// \brief Process incoming events from the operating system

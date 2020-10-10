@@ -256,6 +256,26 @@ void WindowImplWayland::handleWaylandToplevelConfigure(
                      width,
                      height, 0, 0);
 }
+void WindowImplWayland::handleWaylandPointerEnter() {
+    Event evt;
+    evt.type = Event::MouseEntered;
+    m_new_events.push_back(evt);
+}
+void WindowImplWayland::handleWaylandPointerLeave() {
+    Event evt;
+    evt.type = Event::MouseLeft;
+    m_new_events.push_back(evt);
+}
+void WindowImplWayland::handleWaylandKeyboardEnter() {
+    Event evt;
+    evt.type = Event::GainedFocus;
+    m_new_events.push_back(evt);
+}
+void WindowImplWayland::handleWaylandKeyboardLeave() {
+    Event evt;
+    evt.type = Event::LostFocus;
+    m_new_events.push_back(evt);
+}
 void WindowImplWayland::handleWaylandKeyboardKey(uint32_t time,uint32_t key,uint32_t state,bool shift, bool control, bool system, bool alt) {
     Event evt;
     evt.type = (state == WL_POINTER_BUTTON_STATE_RELEASED) ? Event::KeyReleased : Event::KeyPressed;
@@ -265,7 +285,6 @@ void WindowImplWayland::handleWaylandKeyboardKey(uint32_t time,uint32_t key,uint
     evt.key.system = system;
     evt.key.alt = alt;
     m_new_events.push_back(evt);
-
 }
 void WindowImplWayland::handleWaylandPointerMotion(uint32_t time,double x, double y) {
     m_current_pointer_position.x = x;

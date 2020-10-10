@@ -53,7 +53,8 @@ typedef void *EGLContext;
 class WaylandDisplay {
 public:
     WaylandDisplay();
-
+    // TODO: mutex protection for all this, because different windows may run
+    // on different threads
     struct wl_display *display;
     struct wl_registry *registry;
     struct wl_shm *shm;

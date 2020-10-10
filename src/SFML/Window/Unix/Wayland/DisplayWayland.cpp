@@ -68,6 +68,7 @@ namespace
               wl_fixed_t surface_x,
                   wl_fixed_t surface_y) {
         if (shared_globals.the_window->m_surface == surface) {
+            shared_globals.the_window->handleWaylandPointerEnter();
             shared_globals.pointer_focus_window = shared_globals.the_window;
         }
 
@@ -77,6 +78,7 @@ namespace
               uint32_t serial,
                   struct wl_surface *surface) {
         if (shared_globals.the_window->m_surface == surface) {
+            shared_globals.the_window->handleWaylandPointerLeave();
             shared_globals.pointer_focus_window = NULL;
         }
     }
@@ -178,6 +180,7 @@ namespace
               struct wl_surface *surface,
                         struct wl_array *keys) {
         if (shared_globals.the_window->m_surface == surface) {
+            shared_globals.the_window->handleWaylandKeyboardEnter();
             shared_globals.keyboard_focus_window = shared_globals.the_window;
         }
 
@@ -187,6 +190,7 @@ namespace
               uint32_t serial,
                         struct wl_surface *surface) {
         if (shared_globals.the_window->m_surface == surface) {
+            shared_globals.the_window->handleWaylandKeyboardLeave();
             shared_globals.keyboard_focus_window = NULL;
         }
     }
