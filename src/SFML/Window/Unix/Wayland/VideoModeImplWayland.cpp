@@ -50,9 +50,17 @@ std::vector<VideoMode> VideoModeImplWayland::getFullscreenModes()
 VideoMode VideoModeImplWayland::getDesktopMode()
 {
     VideoMode desktopMode;
+    WaylandDisplay* display = OpenWaylandDisplay();
+    if (display->output_width > 0 && display->output_height > 0) {
+        // TODO: actually check this. Also, what if there are multiple outputs?
+        desktopMode = VideoMode(display->output_width / display->output_scale,
+                                display->output_height / display->output_scale);
+    } else {
+        // Fallback, in case mode not provided
+        desktopMode = VideoMode(800, 600);
+    }
 
-    // TODO: use xdg_output to get display size!
-    desktopMode = VideoMode(1024, 768);
+    CloseWaylandDisplay(display);
     return desktopMode;
 }
 

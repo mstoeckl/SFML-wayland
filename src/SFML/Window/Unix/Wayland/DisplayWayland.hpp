@@ -79,6 +79,9 @@ public:
     struct xkb_state* keyboard_state;
 
     struct wl_output *output;
+    int output_width, output_height, output_scale;
+
+
     std::vector<WindowImplWayland *> window_list;
 };
 

@@ -316,6 +316,44 @@ namespace
        seat_name
     };
 
+
+    void output_geometry(void *data,
+             struct wl_output *wl_output,
+             int32_t x,
+             int32_t y,
+             int32_t physical_width,
+             int32_t physical_height,
+             int32_t subpixel,
+             const char *make,
+             const char *model,
+                         int32_t transform) {
+        // todo: expose DPI somehow
+    }
+    void output_mode(void *data,
+             struct wl_output *wl_output,
+             uint32_t flags,
+             int32_t width,
+             int32_t height,
+                     int32_t refresh) {
+        shared_globals.output_width = width;
+        shared_globals.output_height = height;
+    }
+    void output_done(void *data,
+                     struct wl_output *wl_output) {
+
+    }
+    void output_scale(void *data,
+              struct wl_output *wl_output,
+                      int32_t factor) {
+        shared_globals.output_scale = factor;
+    }
+    const struct wl_output_listener output_listener {
+        output_geometry,
+        output_mode,
+        output_done,
+        output_scale,
+    };
+
     void registry_global(void *data,
                struct wl_registry *wl_registry,
                uint32_t name,
@@ -341,7 +379,9 @@ namespace
             shared_globals.seat = (struct wl_seat*)wl_registry_bind(wl_registry, name, &wl_seat_interface, 7);
             wl_seat_add_listener(shared_globals.seat, &seat_listener, NULL);
         }else if (iface == "wl_output") {
-            shared_globals.output = (struct wl_output*)wl_registry_bind(wl_registry, name, &wl_output_interface, 1);
+            // todo: is xdg output also worth using?
+            shared_globals.output = (struct wl_output*)wl_registry_bind(wl_registry, name, &wl_output_interface, 2);
+            wl_output_add_listener(shared_globals.output, &output_listener, NULL);
         }
     }
     void registry_global_remove(void *data,
@@ -375,6 +415,10 @@ WaylandDisplay::WaylandDisplay() :
     output(NULL),
     window_list()
 {
+
+    output_width = 0;
+    output_height = 0;
+    output_scale = 1;
 
     pointer = NULL;
     keyboard = NULL;
