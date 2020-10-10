@@ -207,7 +207,7 @@ void window_xdg_surface_configure(void *data,
           struct xdg_surface *xdg_surface,
                   uint32_t serial) {
     WindowImplWayland* impl = (WindowImplWayland*)data;
-    impl->xdg_surface_configure(xdg_surface, serial);
+    impl->handleWaylandSurfaceConfigure(xdg_surface, serial);
 }
 void window_xdg_toplevel_configure(void *data,
           struct xdg_toplevel *xdg_toplevel,
@@ -216,13 +216,13 @@ void window_xdg_toplevel_configure(void *data,
             struct wl_array *states) {
 
     WindowImplWayland* impl = (WindowImplWayland*)data;
-    impl->xdg_toplevel_configure(xdg_toplevel, width, height, states);
+    impl->handleWaylandToplevelConfigure(xdg_toplevel, width, height, states);
 }
 void window_xdg_toplevel_close(void *data,
                                struct xdg_toplevel *xdg_toplevel) {
 
     WindowImplWayland* impl = (WindowImplWayland*)data;
-    impl->xdg_toplevel_close(xdg_toplevel);
+    impl->handleWaylandToplevelClose(xdg_toplevel);
 }
 struct xdg_surface_listener window_xdg_surface_listener {
     window_xdg_surface_configure
@@ -233,7 +233,7 @@ struct xdg_toplevel_listener window_xdg_toplevel_listener {
 };
 
 
-void WindowImplWayland::xdg_surface_configure(struct xdg_surface *xdg_surface,
+void WindowImplWayland::handleWaylandSurfaceConfigure(struct xdg_surface *xdg_surface,
                                   uint32_t serial) {
     xdg_surface_ack_configure(xdg_surface, serial);
     err() << "TODO CONFIGURE DETAILS" << std::endl;
@@ -241,10 +241,12 @@ void WindowImplWayland::xdg_surface_configure(struct xdg_surface *xdg_surface,
 
     m_xdg_initial_configure_seen = true;
 }
-void WindowImplWayland::xdg_toplevel_close(struct xdg_toplevel *xdg_toplevel) {
-
+void WindowImplWayland::handleWaylandToplevelClose(struct xdg_toplevel *xdg_toplevel) {
+    Event evt;
+    evt.type = Event::Closed;
+    m_new_events.push_back(evt);
 }
-void WindowImplWayland::xdg_toplevel_configure(
+void WindowImplWayland::handleWaylandToplevelConfigure(
        struct xdg_toplevel *xdg_toplevel,
        int32_t width,
        int32_t height,

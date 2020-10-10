@@ -188,10 +188,10 @@ public:
 
 
 
-    void xdg_surface_configure(struct xdg_surface *xdg_surface,
+    void handleWaylandSurfaceConfigure(struct xdg_surface *xdg_surface,
                       uint32_t serial);
-    void xdg_toplevel_close(struct xdg_toplevel *xdg_toplevel);
-    void xdg_toplevel_configure(
+    void handleWaylandToplevelClose(struct xdg_toplevel *xdg_toplevel);
+    void handleWaylandToplevelConfigure(
            struct xdg_toplevel *xdg_toplevel,
            int32_t width,
            int32_t height,
