@@ -276,6 +276,13 @@ void WindowImplWayland::handleWaylandKeyboardLeave() {
     evt.type = Event::LostFocus;
     m_new_events.push_back(evt);
 }
+
+void WindowImplWayland::handleWaylandKeyboardText(uint32_t letter) {
+    Event evt;
+    evt.type = Event::TextEntered;
+    evt.text.unicode = letter;
+    m_new_events.push_back(evt);
+}
 void WindowImplWayland::handleWaylandKeyboardKey(uint32_t time,uint32_t key,uint32_t state,bool shift, bool control, bool system, bool alt) {
     Event evt;
     evt.type = (state == WL_POINTER_BUTTON_STATE_RELEASED) ? Event::KeyReleased : Event::KeyPressed;
@@ -321,6 +328,28 @@ void WindowImplWayland::handleWaylandPointerButton(uint32_t time,uint32_t button
     evt.mouseButton.x = std::floor(m_current_pointer_position.x);
     evt.mouseButton.y = std::floor(m_current_pointer_position.y);
     m_new_events.push_back(evt);
+}
+void WindowImplWayland::handleWaylandPointerAxisDiscrete(uint32_t axis, int val) {
+    if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
+        Event evt;
+        evt.type = Event::MouseWheelMoved;
+        evt.mouseWheel.delta = val;
+        evt.mouseWheel.x = std::floor(m_current_pointer_position.x);
+        evt.mouseWheel.y = std::floor(m_current_pointer_position.y);
+        m_new_events.push_back(evt);
+    }
+
+}
+
+void WindowImplWayland::handleWaylandPointerAxis(uint32_t time,uint32_t axis, double val) {
+    Event evt;
+    evt.type = Event::MouseWheelScrolled;
+    evt.mouseWheelScroll.wheel = axis == WL_POINTER_AXIS_VERTICAL_SCROLL ? Mouse::VerticalWheel : Mouse::HorizontalWheel;
+    evt.mouseWheelScroll.delta = val;
+    evt.mouseWheelScroll.x = std::floor(m_current_pointer_position.x);
+    evt.mouseWheelScroll.y = std::floor(m_current_pointer_position.y);
+    m_new_events.push_back(evt);
+
 }
 
 ////////////////////////////////////////////////////////////

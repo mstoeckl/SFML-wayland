@@ -196,10 +196,12 @@ public:
            int32_t width,
            int32_t height,
              struct wl_array *states);
-
+    void handleWaylandKeyboardText(uint32_t letter);
     void handleWaylandPointerButton(uint32_t time,uint32_t button,uint32_t state);
     void handleWaylandPointerMotion(uint32_t time,double x, double y);
     void handleWaylandKeyboardKey(uint32_t time,uint32_t key,uint32_t state,bool shift, bool control, bool system, bool alt);
+    void handleWaylandPointerAxis(uint32_t time,uint32_t axis, double val);
+    void handleWaylandPointerAxisDiscrete(uint32_t axis, int val);
     void handleWaylandPointerEnter();
     void handleWaylandPointerLeave();
     void handleWaylandKeyboardEnter();

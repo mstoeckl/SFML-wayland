@@ -110,11 +110,16 @@ namespace
              uint32_t time,
              uint32_t axis,
                  wl_fixed_t value) {
+        if (shared_globals.pointer_focus_window) {
+            double val = wl_fixed_to_double(value);
+            shared_globals.pointer_focus_window->handleWaylandPointerAxis(time, axis, val);
+        }
 
     }
     void pointer_frame(void *data,
                        struct wl_pointer *wl_pointer) {
-
+        // TODO: is it worth it to coalesce all the pointer info?
+        // (Probably yes, so that we can apply the mouse motion events _first_?)
     }
     void pointer_axis_source(void *data,
                 struct wl_pointer *wl_pointer,
@@ -131,7 +136,9 @@ namespace
                   struct wl_pointer *wl_pointer,
                   uint32_t axis,
                           int32_t discrete) {
-
+        if (shared_globals.pointer_focus_window) {
+            shared_globals.pointer_focus_window->handleWaylandPointerAxisDiscrete(axis, discrete);
+        }
     }
     static const struct wl_pointer_listener pointer_listener = {
         pointer_enter,
@@ -233,6 +240,10 @@ namespace
                                                                            modmask & (1<<3),
                                                                            modmask & (1<<4),
                                                                            modmask & (1<<6));
+            uint32_t unikey= xkb_state_key_get_utf32(shared_globals.keyboard_state, keycode);
+            if (unikey && state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+                shared_globals.keyboard_focus_window->handleWaylandKeyboardText(unikey);
+            }
         }
 
     }
