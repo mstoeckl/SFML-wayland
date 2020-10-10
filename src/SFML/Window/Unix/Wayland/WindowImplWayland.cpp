@@ -236,8 +236,8 @@ struct xdg_toplevel_listener window_xdg_toplevel_listener {
 void WindowImplWayland::handleWaylandSurfaceConfigure(struct xdg_surface *xdg_surface,
                                   uint32_t serial) {
     xdg_surface_ack_configure(xdg_surface, serial);
-    err() << "TODO CONFIGURE DETAILS" << std::endl;
-    wl_egl_window_resize(m_egl_window, m_window_size.x, m_window_size.y, 0, 0);
+//    err() << "TODO CONFIGURE DETAILS" << std::endl;
+//    wl_egl_window_resize(m_egl_window, m_window_size.x, m_window_size.y, 0, 0);
 
     m_xdg_initial_configure_seen = true;
 }
@@ -247,14 +247,22 @@ void WindowImplWayland::handleWaylandToplevelClose(struct xdg_toplevel *xdg_topl
     m_new_events.push_back(evt);
 }
 void WindowImplWayland::handleWaylandToplevelConfigure(
-       struct xdg_toplevel *xdg_toplevel,
-       int32_t width,
-       int32_t height,
-        struct wl_array *states) {
+        struct xdg_toplevel *xdg_toplevel,   int32_t width,   int32_t height,    struct wl_array *states) {
 
-        wl_egl_window_resize(m_egl_window,
-                     width,
-                     height, 0, 0);
+    Vector2u new_size(width,height);
+        err()  << "toplevel configure" << new_size.x << " " << new_size.y << std::endl;
+    if (new_size != m_window_size && new_size.x > 0 && new_size.y > 0) {
+        Event evt;
+        evt.type = Event::Resized;
+        evt.size.width = new_size.x;
+        evt.size.height = new_size.y;
+        m_window_size = new_size;
+        m_new_events.push_back(evt);
+    }
+
+    wl_egl_window_resize(m_egl_window,
+                 width,
+                 height, 0, 0);
 }
 void WindowImplWayland::handleWaylandPointerEnter() {
     Event evt;
@@ -401,6 +409,11 @@ m_xdg_initial_configure_seen(false)
     zxdg_toplevel_decoration_v1_set_mode(m_xdg_toplevel_deco, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
 
     xdg_toplevel_set_title(m_xdg_toplevel, (const char*)title.toUtf8().c_str());
+
+    if (m_fullscreen) {
+        xdg_toplevel_set_fullscreen(m_xdg_toplevel, NULL);
+    }
+
     wl_surface_commit(m_surface);
 
     wl_display_flush(m_display->display);
