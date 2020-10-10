@@ -79,7 +79,7 @@ public:
     struct xkb_state* keyboard_state;
 
     struct wl_output *output;
-    WindowImplWayland * the_window;
+    std::vector<WindowImplWayland *> window_list;
 };
 
 ////////////////////////////////////////////////////////////

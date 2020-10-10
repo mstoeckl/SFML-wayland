@@ -61,24 +61,34 @@ namespace
         wm_base_ping
     };
 
+    sf::priv::WindowImplWayland* window_for_surface(struct wl_surface *surface) {
+        for (sf::priv::WindowImplWayland* w : shared_globals.window_list) {
+            if (w->m_surface == surface) {
+                return w;
+            }
+        }
+        return NULL;
+    }
+
     void pointer_enter(void *data,
               struct wl_pointer *wl_pointer,
               uint32_t serial,
               struct wl_surface *surface,
               wl_fixed_t surface_x,
                   wl_fixed_t surface_y) {
-        if (shared_globals.the_window->m_surface == surface) {
-            shared_globals.the_window->handleWaylandPointerEnter();
-            shared_globals.pointer_focus_window = shared_globals.the_window;
+        sf::priv::WindowImplWayland* window = window_for_surface(surface);
+        if (window) {
+            window->handleWaylandPointerEnter();
+            shared_globals.pointer_focus_window = window;
         }
-
     }
     void pointer_leave(void *data,
               struct wl_pointer *wl_pointer,
               uint32_t serial,
                   struct wl_surface *surface) {
-        if (shared_globals.the_window->m_surface == surface) {
-            shared_globals.the_window->handleWaylandPointerLeave();
+        sf::priv::WindowImplWayland* window = window_for_surface(surface);
+        if (window) {
+            window->handleWaylandPointerLeave();
             shared_globals.pointer_focus_window = NULL;
         }
     }
@@ -186,18 +196,19 @@ namespace
               uint32_t serial,
               struct wl_surface *surface,
                         struct wl_array *keys) {
-        if (shared_globals.the_window->m_surface == surface) {
-            shared_globals.the_window->handleWaylandKeyboardEnter();
-            shared_globals.keyboard_focus_window = shared_globals.the_window;
+        sf::priv::WindowImplWayland* window = window_for_surface(surface);
+        if (window) {
+            window->handleWaylandKeyboardEnter();
+            shared_globals.keyboard_focus_window = window;
         }
-
     }
     void keyboard_leave(void *data,
               struct wl_keyboard *wl_keyboard,
               uint32_t serial,
                         struct wl_surface *surface) {
-        if (shared_globals.the_window->m_surface == surface) {
-            shared_globals.the_window->handleWaylandKeyboardLeave();
+        sf::priv::WindowImplWayland* window = window_for_surface(surface);
+        if (window) {
+            window->handleWaylandKeyboardLeave();
             shared_globals.keyboard_focus_window = NULL;
         }
     }
@@ -362,7 +373,7 @@ WaylandDisplay::WaylandDisplay() :
     egl_dpy(EGL_NO_DISPLAY),
     seat(NULL),
     output(NULL),
-    the_window(NULL)
+    window_list()
 {
 
     pointer = NULL;

@@ -49,15 +49,6 @@
 ////////////////////////////////////////////////////////////
 namespace
 {
-    sf::priv::WindowImplWayland*              fullscreenWindow = NULL;
-    std::vector<sf::priv::WindowImplWayland*> allWindows;
-    sf::Mutex                             allWindowsMutex;
-    sf::String                            windowManagerName;
-
-    sf::String                            wmAbsPosGood[] = { "Enlightenment", "FVWM", "i3" };
-
-    static const unsigned int             maxTrialsCount = 5;
-
     sf::Keyboard::Key keysym_to_key(uint32_t symbol)
     {
         switch (symbol)
@@ -199,6 +190,8 @@ m_windowMapped   (false)
     // Open a connection with the X server
     m_display = OpenWaylandDisplay();
 
+    sf::err() << "Window creation from handle not supported yet" << std::endl;
+    std::abort();
     // TODO
 }
 
@@ -391,11 +384,7 @@ m_xdg_initial_configure_seen(false)
     // Open a connection with the X server
     m_display = OpenWaylandDisplay();
 
-    if (m_display->the_window) {
-        err() << "More than one window" << std::endl;
-        std::abort();
-    }
-    m_display->the_window = this;
+    m_display->window_list.push_back(this);
 
     m_surface = wl_compositor_create_surface(m_display->compositor);
     m_egl_window = wl_egl_window_create(m_surface, m_window_size.x, m_window_size.y);
@@ -426,15 +415,24 @@ m_xdg_initial_configure_seen(false)
 ////////////////////////////////////////////////////////////
 WindowImplWayland::~WindowImplWayland()
 {
+    for (size_t i=0;i<m_display->window_list.size();i++) {
+        if (m_display->window_list[i] == this) {
+            m_display->window_list.erase(m_display->window_list.begin() + i);
+            break;
+        }
+    }
+    if (m_display->pointer_focus_window == this) {
+        m_display->pointer_focus_window = NULL;
+    }
+    if (m_display->keyboard_focus_window == this) {
+        m_display->keyboard_focus_window = NULL;
+    }
+
     // Cleanup graphical resources
     cleanup();
 
     // Close the connection with the X server
     CloseWaylandDisplay(m_display);
-
-    // Remove this window from the global list of windows (required for focus request)
-    Lock lock(allWindowsMutex);
-    allWindows.erase(std::find(allWindows.begin(), allWindows.end(), this));
 }
 
 
@@ -550,40 +548,6 @@ bool WindowImplWayland::hasFocus() const
     return true;
 }
 
-
-////////////////////////////////////////////////////////////
-void WindowImplWayland::grabFocus()
-{
-    err() << "called grabFocus" << std::endl;
-
-}
-
-
-////////////////////////////////////////////////////////////
-void WindowImplWayland::setVideoMode(const VideoMode& mode)
-{
-}
-
-
-////////////////////////////////////////////////////////////
-void WindowImplWayland::resetVideoMode()
-{
-}
-
-
-////////////////////////////////////////////////////////////
-void WindowImplWayland::switchToFullscreen()
-{
-    grabFocus();
-}
-
-
-////////////////////////////////////////////////////////////
-void WindowImplWayland::setProtocols()
-{
-}
-
-
 ////////////////////////////////////////////////////////////
 void WindowImplWayland::initialize()
 {
@@ -595,16 +559,14 @@ void WindowImplWayland::initialize()
 }
 
 ////////////////////////////////////////////////////////////
-void WindowImplWayland::createHiddenCursor()
-{
-}
-
-
-////////////////////////////////////////////////////////////
 void WindowImplWayland::cleanup()
 {
     // Restore the previous video mode (in case we were running in fullscreen)
-    resetVideoMode();
+    wl_egl_window_destroy(m_egl_window);
+    zxdg_toplevel_decoration_v1_destroy(m_xdg_toplevel_deco);
+    xdg_toplevel_destroy(m_xdg_toplevel);
+    xdg_surface_destroy(m_xdg_surface);
+    wl_surface_destroy(m_surface);
 
     // Unhide the mouse cursor (in case it was hidden)
     setMouseCursorVisible(true);
