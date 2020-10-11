@@ -75,6 +75,8 @@ public:
     std::vector<std::pair<uint32_t, uint32_t>> keyboard_held_keys;
     WindowImplWayland * keyboard_focus_window;
     WindowImplWayland * pointer_focus_window;
+    bool pointer_button_vector[8];
+    float pointer_location_x, pointer_location_y;
     struct xkb_keymap* keyboard_keymap;
     struct xkb_state* keyboard_state;
 

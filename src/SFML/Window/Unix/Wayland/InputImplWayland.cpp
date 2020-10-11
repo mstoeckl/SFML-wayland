@@ -31,6 +31,7 @@
 #include <SFML/System/Err.hpp>
 
 #include <xkbcommon/xkbcommon.h>
+#include <linux/input-event-codes.h>
 
 
 namespace sf
@@ -179,39 +180,79 @@ void InputImplWayland::setVirtualKeyboardVisible(bool /*visible*/)
 ////////////////////////////////////////////////////////////
 bool InputImplWayland::isMouseButtonPressed(Mouse::Button button)
 {
-    return false;
+
+    int i=0;
+    switch (button) {
+    case Mouse::Left:
+        i=BTN_LEFT - BTN_MOUSE;
+        break;
+    case Mouse::Right:
+        i=BTN_RIGHT - BTN_MOUSE;
+        break;
+    case Mouse::Middle:
+        i=BTN_MIDDLE - BTN_MOUSE;
+        break;
+    case Mouse::XButton1:
+        i=BTN_SIDE - BTN_MOUSE;
+        break;
+    case Mouse::XButton2:
+        i=BTN_EXTRA - BTN_MOUSE;
+        break;
+    default:
+        return false;
+    }
+    WaylandDisplay* display = OpenWaylandDisplay();
+    bool pressed = display->pointer_button_vector[i];
+    CloseWaylandDisplay(display);
+    return pressed;
 }
 
 
 ////////////////////////////////////////////////////////////
 Vector2i InputImplWayland::getMousePosition()
 {
-    return Vector2i();
+
+    WaylandDisplay* display = OpenWaylandDisplay();
+    Vector2i mousepos(std::round(display->pointer_location_x),std::round(display->pointer_location_y));
+    CloseWaylandDisplay(display);
+    return mousepos;
 }
 
 
 ////////////////////////////////////////////////////////////
 Vector2i InputImplWayland::getMousePosition(const WindowBase& relativeTo)
 {
+    // todo! is this meaningful with >1 window?
+    return getMousePosition();
 }
 
 
 ////////////////////////////////////////////////////////////
 void InputImplWayland::setMousePosition(const Vector2i& position)
 {
+    static bool warned = false;
+    if (!warned) {
+        warned = true;
+        sf::err() << "Mouse position cannot be set on Wayland" << std::endl;
+    }
 }
 
 
 ////////////////////////////////////////////////////////////
 void InputImplWayland::setMousePosition(const Vector2i& position, const WindowBase& relativeTo)
 {
+    static bool warned = false;
+    if (!warned) {
+        warned = true;
+        sf::err() << "Mouse position cannot be set on Wayland" << std::endl;
+    }
 }
 
 
 ////////////////////////////////////////////////////////////
 bool InputImplWayland::isTouchDown(unsigned int /*finger*/)
 {
-    // Not applicable
+    // todo: implement
     return false;
 }
 
@@ -219,7 +260,7 @@ bool InputImplWayland::isTouchDown(unsigned int /*finger*/)
 ////////////////////////////////////////////////////////////
 Vector2i InputImplWayland::getTouchPosition(unsigned int /*finger*/)
 {
-    // Not applicable
+    // todo: implement
     return Vector2i();
 }
 
@@ -227,7 +268,7 @@ Vector2i InputImplWayland::getTouchPosition(unsigned int /*finger*/)
 ////////////////////////////////////////////////////////////
 Vector2i InputImplWayland::getTouchPosition(unsigned int /*finger*/, const WindowBase& /*relativeTo*/)
 {
-    // Not applicable
+    // todo: implement
     return Vector2i();
 }
 

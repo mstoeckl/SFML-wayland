@@ -100,6 +100,8 @@ namespace
         if (shared_globals.pointer_focus_window) {
             double x = wl_fixed_to_double(surface_x);
             double y = wl_fixed_to_double(surface_y);
+            shared_globals.pointer_location_x = x;
+            shared_globals.pointer_location_y = y;
             shared_globals.pointer_focus_window->handleWaylandPointerMotion(time,x,y);
         }
     }
@@ -111,6 +113,9 @@ namespace
                    uint32_t state) {
         // TODO, call window function adding event to its queue
         if (shared_globals.pointer_focus_window) {
+            if (button >= BTN_MOUSE && button < BTN_MOUSE + 8) {
+                shared_globals.pointer_button_vector[button - BTN_MOUSE] = (state == WL_POINTER_BUTTON_STATE_PRESSED) ? true : false;
+            }
             // TODO: handle serial!
             shared_globals.pointer_focus_window->handleWaylandPointerButton(time, button, state);
         }
@@ -419,6 +424,10 @@ WaylandDisplay::WaylandDisplay() :
     output_width = 0;
     output_height = 0;
     output_scale = 1;
+
+    std::fill(pointer_button_vector, pointer_button_vector+8, false);
+    pointer_location_x = 0.;
+    pointer_location_y = 0.;
 
     pointer = NULL;
     keyboard = NULL;
